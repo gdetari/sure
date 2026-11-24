@@ -19,6 +19,7 @@ ca:
       not_self_hosted: En aquesta instal·lació, els proveïdors de dades de mercat els configura l'operador de la instància.
       success: S'han activat els preus de criptomonedes. Els valors de les carteres apareixeran després de la propera sincronització.
     errors:
+      alchemy_access: Demana a l’administrador de Sure que comprovi ALCHEMY_API_KEY i les xarxes activades a l’aplicació d’Alchemy.
       address_required: Introdueix una adreça de cartera.
       already_linked: Aquesta adreça ja se segueix en aquesta xarxa. Fes servir «Revisa els tokens» per canviar quins actius se segueixen.
       chain_unreachable: No s'ha pogut accedir a l'explorador públic d'aquesta xarxa. Torna-ho a provar d'aquí a un moment.

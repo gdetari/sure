@@ -19,6 +19,7 @@ nl:
       not_self_hosted: "Marktgegevensproviders worden op deze installatie geconfigureerd door de beheerder van de instantie."
       success: "Cryptoprijzen zijn ingeschakeld. Walletwaarden verschijnen na de volgende synchronisatie."
     errors:
+      alchemy_access: Vraag je Sure-beheerder om ALCHEMY_API_KEY en de ingeschakelde netwerken in de Alchemy-app te controleren.
       address_required: "Voer een walletadres in."
       already_linked: "Dat adres wordt op dit netwerk al gevolgd. Gebruik Tokens controleren om te wijzigen welke assets worden gevolgd."
       chain_unreachable: "De openbare explorer voor dit netwerk is niet bereikbaar. Probeer het zo meteen opnieuw."

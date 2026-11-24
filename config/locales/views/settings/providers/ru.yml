@@ -344,6 +344,7 @@ ru:
         disconnect: Отключить
         disconnect_confirm: Вы уверены, что хотите отключить %{name}?
       onchain_wallet_panel:
+        alchemy_hint: Для чтения балансов и переводов кошельков EVM эта установка использует Alchemy.
         add_wallet: Добавить кошелёк
         advanced: Дополнительно
         disconnect_all: Отключить все кошельки

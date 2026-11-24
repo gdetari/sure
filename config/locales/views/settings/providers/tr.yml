@@ -349,6 +349,7 @@ tr:
         disconnect: Bağlantıyı kes
         disconnect_confirm: '%{name} bağlantısını kesmek istediğinizden emin misiniz?'
       onchain_wallet_panel:
+        alchemy_hint: Bu kurulum, EVM cüzdanlarının bakiyelerini ve transferlerini okumak için Alchemy kullanır.
         add_wallet: Cüzdan ekle
         advanced: Gelişmiş
         disconnect_all: Tüm cüzdanların bağlantısını kes

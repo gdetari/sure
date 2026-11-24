@@ -344,6 +344,7 @@ nb:
         disconnect: Koble fra
         disconnect_confirm: Er du sikker på at du vil koble fra %{name}?
       onchain_wallet_panel:
+        alchemy_hint: Denne installasjonen bruker Alchemy til å lese saldoer og overføringer for EVM-lommebøker.
         add_wallet: Legg til lommebok
         advanced: Avansert
         disconnect_all: Koble fra alle lommebøker

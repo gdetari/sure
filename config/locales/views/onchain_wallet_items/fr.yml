@@ -19,6 +19,7 @@ fr:
       not_self_hosted: Sur ce déploiement, les fournisseurs de données de marché sont configurés par l'opérateur de l'instance.
       success: Les cours des cryptomonnaies sont activés. La valeur des portefeuilles apparaîtra après la prochaine synchronisation.
     errors:
+      alchemy_access: Demandez à votre administrateur Sure de vérifier ALCHEMY_API_KEY et les réseaux activés dans l’application Alchemy.
       address_required: Saisissez une adresse de portefeuille.
       already_linked: Cette adresse est déjà suivie sur ce réseau. Utilisez « Vérifier les jetons » pour changer les actifs suivis.
       chain_unreachable: L'explorateur public de ce réseau est injoignable. Réessayez dans un instant.

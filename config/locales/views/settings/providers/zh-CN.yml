@@ -230,6 +230,7 @@ zh-CN:
         disconnect_all: 断开所有钱包连接
         disconnect_all_confirm: 这将移除所有被追踪的地址及其账户。是否继续？
         sync_start_date_label: 忽略此日期之前的转账
+        alchemy_hint: 此实例通过 Alchemy 读取 EVM 钱包余额和转账记录。
         sync_start_date_hint: 此日期之前的转账将被忽略。留空以导入区块链浏览器报告的所有内容。
         advanced: 高级设置
         etherscan_api_key_label: Etherscan API 密钥（可选）

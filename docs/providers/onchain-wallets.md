@@ -1,11 +1,33 @@
 # On-chain (self-custody) wallets
 
 Sure can track wallets you hold the keys to — Bitcoin, six EVM networks,
-Solana, Polkadot and the Cosmos Hub — from their **public addresses only**. Nothing is signed, no key or seed
-phrase is ever entered, and no API key is required for any chain.
+Solana, Polkadot and the Cosmos Hub — from their **public addresses only**.
+Sure never needs a wallet private key or seed phrase.
 
 This document covers where the data comes from, what needs configuring, the
 limits you will hit, and how to diagnose a wallet that looks wrong.
+
+## Use Alchemy for EVM wallets
+
+Blockscout is the default. To use Alchemy for Ethereum, Base, Arbitrum,
+Optimism, Polygon PoS and Gnosis, set `ONCHAIN_EVM_PROVIDER=alchemy` and
+`ALCHEMY_API_KEY` in both the web and worker environments. Enable all six
+mainnets for that app in the [Alchemy dashboard](https://dashboard.alchemy.com/).
+The example Compose file passes both settings to both services. Recreate
+`web` and `worker` after changing your configuration.
+
+Open **Settings → Providers → On-chain wallets → Add wallet** to confirm the
+linking form names Alchemy. [View the Alchemy wallet form](onchain-alchemy-wallet.png).
+
+Alchemy supplies native balances, ERC-20 holdings and direct native and ERC-20
+transfers for new and existing wallets. Network detection uses one balance
+request per candidate. Alchemy reads transfer history in both directions, up
+to `ONCHAIN_HISTORY_MAX_PAGES` pages of 25 transfers per wallet and network.
+Changing providers preserves wallet links and transfer identifiers. A saved
+Etherscan key applies only when Blockscout is selected. Alchemy labels its
+wallet transfer endpoint as beta.
+[Alchemy wallet balances](https://www.alchemy.com/docs/data/portfolio-apis/portfolio-api-endpoints/portfolio-api-endpoints/get-tokens-by-address) ·
+[Alchemy wallet transfers](https://www.alchemy.com/docs/data/portfolio-apis/portfolio-api-endpoints/portfolio-api-endpoints/get-transfers-by-address)
 
 ## What gets tracked
 
@@ -66,6 +88,9 @@ When an asset ends up valued at zero for either reason, it is recorded in
 listed, so the cause is visible without having to reproduce it.
 
 ## Data sources
+
+The EVM rows below describe the default Blockscout configuration. With Alchemy
+selected, all six EVM networks use the Portfolio API and the same app key.
 
 | Network | Source | Key required | Override |
 |---|---|---|---|

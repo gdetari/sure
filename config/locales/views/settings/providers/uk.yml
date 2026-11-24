@@ -301,6 +301,7 @@ uk:
         disconnect: Відключити
         disconnect_confirm: Ви впевнені, що хочете відключити %{name}?
       onchain_wallet_panel:
+        alchemy_hint: Для читання балансів і переказів гаманців EVM ця інсталяція використовує Alchemy.
         add_wallet: Додати гаманець
         advanced: Додатково
         disconnect_all: Відключити всі гаманці

@@ -19,6 +19,7 @@ zh-CN:
       not_self_hosted: 在此部署上，行情数据提供商由实例管理员统一配置。
       success: 加密货币价格已启用。钱包估值将在下次同步后显示。
     errors:
+      alchemy_access: 请联系 Sure 管理员检查 ALCHEMY_API_KEY 以及 Alchemy 应用中已启用的网络。
       address_required: 请输入钱包地址。
       already_linked: 该地址已在此网络上被追踪。请使用“检查代币”来更改追踪的资产。
       chain_unreachable: 无法连接此网络的公共区块浏览器。请稍后重试。

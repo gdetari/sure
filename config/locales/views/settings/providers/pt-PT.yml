@@ -147,6 +147,7 @@ pt-PT:
         disconnect: Desligar
         disconnect_confirm: "Tem a certeza de que pretende desligar %{name}?"
       onchain_wallet_panel:
+        alchemy_hint: Esta instalação utiliza a Alchemy para ler os saldos e as transferências das carteiras EVM.
         add_wallet: Adicionar carteira
         advanced: Avançado
         disconnect_all: Desligar todas as carteiras

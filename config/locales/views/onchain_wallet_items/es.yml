@@ -19,6 +19,7 @@ es:
       not_self_hosted: En esta instalación, los proveedores de datos de mercado los configura el operador de la instancia.
       success: Precios de criptomonedas activados. El valor de las carteras aparecerá tras la próxima sincronización.
     errors:
+      alchemy_access: Pide al administrador de Sure que compruebe ALCHEMY_API_KEY y las redes activadas en la aplicación de Alchemy.
       address_required: Introduce una dirección de cartera.
       already_linked: Esa dirección ya se sigue en esta red. Usa Revisar tokens para cambiar qué activos se siguen.
       chain_unreachable: No se ha podido acceder al explorador público de esta red. Inténtalo de nuevo en un momento.

@@ -39,7 +39,7 @@
   <% if connection.present? %>
     <%= render DS::Disclosure.new(title: t("settings.providers.onchain_wallet_panel.advanced"), align: :right) do %>
       <div class="pt-2 space-y-3">
-        <p class="text-sm text-secondary"><%= t("settings.providers.onchain_wallet_panel.etherscan_hint") %></p>
+        <p class="text-sm text-secondary"><%= t(Onchain::Chains.alchemy? ? "settings.providers.onchain_wallet_panel.alchemy_hint" : "settings.providers.onchain_wallet_panel.etherscan_hint") %></p>
 
         <%= styled_form_with model: connection,
                              url: onchain_wallet_item_path(connection),
@@ -47,11 +47,13 @@
                              method: :patch,
                              data: { turbo: true },
                              class: "space-y-3" do |form| %>
-          <%= form.text_field :etherscan_api_key,
-                              label: t("settings.providers.onchain_wallet_panel.etherscan_api_key_label"),
-                              placeholder: connection.etherscan_api_key.present? ? t("settings.providers.onchain_wallet_panel.keep_etherscan_api_key") : t("settings.providers.onchain_wallet_panel.etherscan_api_key_placeholder"),
-                              type: :password,
-                              value: nil %>
+          <% unless Onchain::Chains.alchemy? %>
+            <%= form.text_field :etherscan_api_key,
+                                label: t("settings.providers.onchain_wallet_panel.etherscan_api_key_label"),
+                                placeholder: connection.etherscan_api_key.present? ? t("settings.providers.onchain_wallet_panel.keep_etherscan_api_key") : t("settings.providers.onchain_wallet_panel.etherscan_api_key_placeholder"),
+                                type: :password,
+                                value: nil %>
+          <% end %>
 
           <%= form.date_field :sync_start_date,
                               label: t("settings.providers.onchain_wallet_panel.sync_start_date_label"),

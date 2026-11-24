@@ -191,6 +191,7 @@ nl:
         disconnect: "Loskoppelen"
         disconnect_confirm: "Weet u zeker dat u %{name} wilt loskoppelen?"
       onchain_wallet_panel:
+        alchemy_hint: Deze installatie gebruikt Alchemy om saldi en overboekingen van EVM-wallets te lezen.
         add_wallet: "Wallet toevoegen"
         advanced: "Geavanceerd"
         disconnect_all: "Alle wallets loskoppelen"

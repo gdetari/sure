@@ -19,6 +19,7 @@ de:
       not_self_hosted: Marktdatenanbieter werden für diese Bereitstellung vom Betreiber der Instanz konfiguriert.
       success: Kryptokurse sind aktiviert. Die Wallet-Werte werden nach dem nächsten Sync angezeigt.
     errors:
+      alchemy_access: Bitte den Sure-Administrator, ALCHEMY_API_KEY und die in der Alchemy-App aktivierten Netzwerke zu prüfen.
       address_required: Gib eine Wallet-Adresse ein.
       already_linked: Diese Adresse wird in diesem Netzwerk bereits verfolgt. Welche Vermögenswerte verfolgt werden, kannst du in der Wallet-Verwaltung ändern.
       chain_unreachable: Der öffentliche Explorer für dieses Netzwerk ist nicht erreichbar. Versuch es gleich noch einmal.

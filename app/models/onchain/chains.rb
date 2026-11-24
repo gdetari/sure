@@ -39,7 +39,9 @@ module Onchain
       end
 
       def adapter(credentials: {})
-        adapter_class_name.constantize.new(**adapter_options, credentials: credentials)
+        klass = adapter_class_name.constantize
+        klass = Onchain::AlchemyAdapter if klass == Onchain::EvmAdapter && Chains.alchemy?
+        klass.new(**adapter_options, credentials: credentials)
       end
 
       def supports_tokens?
@@ -89,6 +91,12 @@ module Onchain
       { key: "polygon",  symbol: "POL",  name: "Polygon",  explorer_url: "https://polygon.blockscout.com" },
       { key: "gnosis",   symbol: "XDAI", name: "xDai",     explorer_url: "https://gnosis.blockscout.com" }
     ].freeze
+
+    # Portfolio API network names differ from both EVM chain IDs and RPC hostnames.
+    ALCHEMY_NETWORKS = {
+      ETHEREUM => "eth-mainnet", "base" => "base-mainnet", "arbitrum" => "arb-mainnet",
+      "optimism" => "opt-mainnet", "polygon" => "matic-mainnet", "gnosis" => "gnosis-mainnet"
+    }.freeze
 
     SOLANA = "solana"
 
@@ -141,6 +149,14 @@ module Onchain
     ].freeze
 
     class << self
+      def alchemy?
+        case ENV["ONCHAIN_EVM_PROVIDER"].to_s.strip
+        when "", "blockscout" then false
+        when "alchemy" then true
+        else raise Error, "ONCHAIN_EVM_PROVIDER must be blockscout or alchemy"
+        end
+      end
+
       def all
         registry.values
       end

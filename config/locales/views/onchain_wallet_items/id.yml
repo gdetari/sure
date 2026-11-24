@@ -19,6 +19,7 @@ id:
       not_self_hosted: Penyedia data pasar dikonfigurasikan oleh operator instance pada deployment ini.
       success: Harga kripto telah diaktifkan. Nilai dompet akan muncul setelah sinkronisasi berikutnya.
     errors:
+      alchemy_access: Minta administrator Sure memeriksa ALCHEMY_API_KEY dan jaringan yang diaktifkan di aplikasi Alchemy.
       address_required: Masukkan alamat dompet.
       already_linked: Alamat tersebut sudah dilacak di jaringan ini. Gunakan Tinjau token untuk mengubah aset yang dilacak.
       chain_unreachable: Penjelajah publik untuk jaringan ini tidak dapat dijangkau. Coba lagi sebentar lagi.
