@@ -91,6 +91,21 @@ class Onchain::AlchemyAdapterTest < ActiveSupport::TestCase
     end
   end
 
+  test "a rate-limited detection probe stops while a sync retries the balance request" do
+    alchemy do
+      probe = stub_request(:post, "#{BASE_URL}/assets/tokens/balances/by-address").to_return(status: 429)
+      assert_nil adapter.has_activity?(ADDRESS)
+      assert_requested probe, times: 1
+
+      balances = stub_request(:post, "#{BASE_URL}/assets/tokens/by-address")
+        .to_return(status: 429).then
+        .to_return(body: { data: { tokens: [ native ] } }.to_json, headers: { "Content-Type" => "application/json" })
+      api("transfers/by-address", { transfers: [] }, history_params)
+      assert_equal 1, adapter.fetch_snapshot(ADDRESS).find_asset(kind: "native").quantity
+      assert_requested balances, times: 2
+    end
+  end
+
   test "a missing native row fails the balance read while an explicit zero clears it" do
     alchemy do
       chain = adapter

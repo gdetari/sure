@@ -36,12 +36,46 @@ class Provider::Alchemy
     false
   end
 
+  def holdings(address)
+    params = wallet_params(address).merge(withMetadata: true, withPrices: true)
+    native = nil
+    tokens = {}
+    inspected = 0
+    @assets_truncated = false
+    seen_cursors = Set.new
+    loop do
+      data = token_page(request("assets/tokens/by-address", params))
+      rows = data.fetch("tokens")
+      rows.each do |row|
+        if row.fetch("tokenAddress").nil?
+          native = amount(row["tokenBalance"])
+        else
+          inspected += 1
+          token = token_balance(row)
+          tokens[token[:contract]] = token if token
+        end
+      end
+      cursor = data["pageKey"].presence
+      break unless cursor
+      if rows.empty? || inspected >= Onchain::AssetBudget.tokens || !seen_cursors.add?(cursor)
+        @assets_truncated = true
+        break
+      end
+      params[:pageKey] = cursor
+    end
+    raise ApiError, "Missing Alchemy native balance" if native.nil?
+
+    Holdings.new(native, tokens.values, @assets_truncated)
+  rescue KeyError
+    raise ApiError, "Invalid Alchemy balance response"
+  end
+
   def native_balance(address)
-    holdings(address).fetch(:native)
+    holdings(address).native
   end
 
   def token_balances(address)
-    holdings(address).fetch(:tokens)
+    holdings(address).tokens
   end
 
   def transfers(address)
@@ -56,13 +90,9 @@ class Provider::Alchemy
       raise ApiError, "Invalid Alchemy transfer history" unless rows.is_a?(Array)
 
       @truncated ||= response["error"].present?
-      rows.each do |row|
-        movement = transfer(row, address)
-        movements << movement if movement
-      end
+      movements.concat(rows.filter_map { |row| transfer(row, address) })
       cursor = response["pageKey"].presence
-      break unless cursor
-      break if params[:pageKey] == cursor
+      break if cursor.nil? || params[:pageKey] == cursor
       params[:pageKey] = cursor
     end
     @truncated ||= cursor.present?
@@ -82,49 +112,12 @@ class Provider::Alchemy
       data
     end
 
-    def holdings(address)
-      return @holdings if @address == address && @holdings
-
-      params = wallet_params(address).merge(withMetadata: true, withPrices: true)
-      native = nil
-      tokens = {}
-      inspected = 0
-      @assets_truncated = false
-      seen_cursors = Set.new
-      loop do
-        data = token_page(request("assets/tokens/by-address", params))
-        rows = data.fetch("tokens")
-        rows.each do |row|
-          if row.fetch("tokenAddress").nil?
-            native = amount(row["tokenBalance"])
-          else
-            inspected += 1
-            token = token_balance(row)
-            tokens[token[:contract]] = token if token
-          end
-        end
-        cursor = data["pageKey"].presence
-        break unless cursor
-        if rows.empty? || inspected >= Onchain::AssetBudget.tokens || !seen_cursors.add?(cursor)
-          @assets_truncated = true
-          break
-        end
-        params[:pageKey] = cursor
-      end
-      raise ApiError, "Missing Alchemy native balance" if native.nil?
-
-      @address = address
-      @holdings = { native: native, tokens: tokens.values }
-    rescue KeyError
-      raise ApiError, "Invalid Alchemy balance response"
-    end
-
     def token_balance(row)
       raw = amount(row["tokenBalance"])
       return if raw.zero?
 
       metadata = row["tokenMetadata"] || {}
-      unless metadata["decimals"].is_a?(Integer) && metadata["decimals"].between?(0, 255)
+      unless valid_decimals?(metadata["decimals"])
         # A missing scale makes this holding unknown. Preserve any previously
         # imported balance rather than interpreting the raw units as whole tokens.
         @assets_truncated = true
@@ -136,9 +129,8 @@ class Provider::Alchemy
     end
 
     def transfer(row, address)
-      incoming = address.casecmp?(row["to"].to_s)
-      outgoing = address.casecmp?(row["from"].to_s)
-      return if incoming == outgoing
+      direction = transfer_direction(address, from: row["from"], to: row["to"])
+      return if direction.zero?
 
       fungible = row.fetch("fungible")
       raw = amount(fungible.fetch("rawValue"))
@@ -151,10 +143,10 @@ class Provider::Alchemy
         # Blockscout and Etherscan already identify these trades by hash_logIndex.
         index = row["uniqueId"].to_s[/\A#{Regexp.escape(hash)}:log:(\d+)\z/, 1]
         raise ApiError, "Missing Alchemy transfer log index" unless index
-        id = "#{hash}_#{index.to_i}"
         contract = row.fetch("contractAddress").downcase
+        id = transfer_external_id(hash, contract, index.to_i)
         decimals = fungible["decimals"]
-        unless decimals.is_a?(Integer) && decimals.between?(0, 255)
+        unless valid_decimals?(decimals)
           @truncated = true
           return
         end
@@ -162,9 +154,13 @@ class Provider::Alchemy
         return
       end
       { external_id: id, contract: contract, symbol: fungible["asset"], decimals: decimals,
-        raw_amount: incoming ? raw : -raw, timestamp: Time.iso8601(row.fetch("blockTimestamp")) }
+        raw_amount: raw * direction, timestamp: Time.iso8601(row.fetch("blockTimestamp")) }
     rescue KeyError, ArgumentError
       raise ApiError, "Invalid Alchemy transfer"
+    end
+
+    def valid_decimals?(decimals)
+      decimals.is_a?(Integer) && decimals.between?(0, 255)
     end
 
     def amount(hex)
@@ -174,24 +170,15 @@ class Provider::Alchemy
     end
 
     def request(endpoint, params)
-      retries = 0
-      begin
-        response = translate_transport_errors do
-          self.class.post("/data/v1/#{ERB::Util.url_encode(@key)}/#{endpoint}", body: params.to_json, timeout: @timeout)
-        end
+      request_with_rate_limit_retries(@max_retries) do
+        response = self.class.post("/data/v1/#{ERB::Util.url_encode(@key)}/#{endpoint}", body: params.to_json, timeout: @timeout)
         raise AccessError, "Check the Alchemy key and enabled networks" if [ 401, 402, 403 ].include?(response.code)
         raise RateLimitError, "Alchemy rate limit exceeded" if response.code == 429
         raise ApiError, "Alchemy returned HTTP #{response.code}" unless response.success?
 
-        body = translate_transport_errors { response.parsed_response }
+        body = response.parsed_response
         raise ApiError, "Invalid Alchemy response" unless body.is_a?(Hash)
         body
-      rescue RateLimitError
-        raise if retries >= @max_retries
-
-        sleep(0.5 * 2**retries)
-        retries += 1
-        retry
       end
     end
 end

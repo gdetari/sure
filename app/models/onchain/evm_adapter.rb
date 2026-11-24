@@ -63,14 +63,17 @@ class Onchain::EvmAdapter
     raise Onchain::Chains::Error, "Invalid EVM address" unless valid_address?(address)
 
     wrap_provider_errors do
-      tokens = token_assets(address)
+      balances = balance_backend.holdings(address)
+      held = balances.tokens.select { |token| scale(token[:raw_amount], token[:decimals]).positive? }
+      surfaced = rank(held).first(Onchain::AssetBudget.tokens)
+      native = definition.native_asset(quantity: scale(balances.native, NATIVE_DECIMALS))
       movements = best_effort_movements { movements(address) }
 
       Onchain::Snapshot.new(
-        assets: [ native_asset(address), *tokens ],
+        assets: [ native, *surfaced.map { |token| token_asset(token) } ],
         movements: movements || [],
         history_truncated: movements.nil? || history_backend.truncated,
-        assets_truncated: @assets_truncated
+        assets_truncated: balances.truncated || held.size > surfaced.size
       )
     end
   end
@@ -138,37 +141,14 @@ class Onchain::EvmAdapter
       )
     end
 
-    # Always present, even at zero: the native coin is what the wallet is, and a
-    # wallet that spent everything still has a history worth keeping.
-    def native_asset(address)
-      definition.native_asset(quantity: scale(balance_backend.native_balance(address), NATIVE_DECIMALS))
-    end
-
-    def token_assets(address)
-      held = balance_backend.token_balances(address).select do |token|
-        scale(token[:raw_amount], token[:decimals]).positive?
-      end
-
-      surfaced = rank(held).first(Onchain::AssetBudget.tokens)
-      @assets_truncated = held.size > surfaced.size
-
-      surfaced.map do |token|
-        definition.token_asset(
-          symbol: token[:symbol].presence || short_contract(token[:contract]),
-          name: token[:name].presence || token[:symbol].presence || short_contract(token[:contract]),
-          decimals: token[:decimals],
-          quantity: scale(token[:raw_amount], token[:decimals]),
-          contract: token[:contract],
-          notable: notable?(token)
-        )
-      end
-    end
-
-    # A holding the indexer can price, worth more than dust.
-    def notable?(token)
-      return false if token[:rate].nil?
-
-      (scale(token[:raw_amount], token[:decimals]) * token[:rate]) >= DUST_VALUE
+    def token_asset(token)
+      symbol = token[:symbol].presence || token[:contract].to_s.first(10)
+      quantity = scale(token[:raw_amount], token[:decimals])
+      definition.token_asset(
+        symbol: symbol, name: token[:name].presence || symbol, decimals: token[:decimals],
+        quantity: quantity, contract: token[:contract],
+        notable: token[:rate].present? && quantity * token[:rate] >= DUST_VALUE
+      )
     end
 
     # Market cap first, because that is the signal the indexer already gives us
@@ -204,9 +184,5 @@ class Onchain::EvmAdapter
       BigDecimal(raw_amount.to_s.presence || "0") / (10.to_d**decimals.to_i)
     rescue ArgumentError
       0.to_d
-    end
-
-    def short_contract(contract)
-      contract.to_s.first(10)
     end
 end

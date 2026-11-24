@@ -23,7 +23,6 @@ class Provider::Etherscan
   # The free tier allows 5 requests/second; stay well inside it.
   MIN_REQUEST_INTERVAL = 0.4
   MAX_RETRIES = 3
-  RETRY_BASE_DELAY = 0.5
 
   base_uri BASE_URL
   default_options.merge!({ timeout: 30 }.merge(httparty_ssl_options))
@@ -59,14 +58,14 @@ class Provider::Etherscan
   end
 
   def transfers(address)
-    @transfers ||= {}
-    @transfers[address.to_s] ||= native_transfers(address) + token_transfers(address)
+    @truncated = false
+    native_transfers(address) + token_transfers(address)
   end
 
   private
     def native_transfers(address)
       paged_get(action: "txlist", address: address).filter_map do |transaction|
-        raw_amount = signed_amount(transaction["value"], from: transaction["from"], to: transaction["to"], address: address)
+        raw_amount = transaction["value"].to_s.to_i * transfer_direction(address, from: transaction["from"], to: transaction["to"])
         next if raw_amount.zero?
 
         {
@@ -86,11 +85,11 @@ class Provider::Etherscan
         contract = transfer["contractAddress"].to_s.presence&.downcase
         next if contract.blank?
 
-        raw_amount = signed_amount(transfer["value"], from: transfer["from"], to: transfer["to"], address: address)
+        raw_amount = transfer["value"].to_s.to_i * transfer_direction(address, from: transfer["from"], to: transfer["to"])
         next if raw_amount.zero?
 
         {
-          external_id: transfer_external_id(transfer["hash"], contract, transfer["logIndex"]),
+          external_id: transfer_external_id(transfer["hash"], contract, transfer["logIndex"].presence),
           contract: contract,
           symbol: transfer["tokenSymbol"],
           name: transfer["tokenName"],
@@ -99,23 +98,6 @@ class Provider::Etherscan
           timestamp: parse_time(transfer["timeStamp"])
         }
       end
-    end
-
-    # See Provider::Blockscout#transfer_external_id: the log index is what makes
-    # one of several same-token transfers in a transaction distinct.
-    def transfer_external_id(transaction_hash, contract, log_index)
-      [ transaction_hash, log_index.presence || contract ].join("_")
-    end
-
-    def signed_amount(value, from:, to:, address:)
-      amount = value.to_s.presence&.to_i || 0
-      target = address.to_s.downcase
-      received = to.to_s.downcase == target
-      sent = from.to_s.downcase == target
-
-      return 0 if received == sent
-
-      received ? amount : -amount
     end
 
     def parse_time(unix_timestamp)
@@ -148,25 +130,10 @@ class Provider::Etherscan
     end
 
     def api_get(params)
-      attempts = 0
-
-      begin
-        attempts += 1
+      request_with_rate_limit_retries(MAX_RETRIES) do
         throttle_request
-        translate_transport_errors do
-          response = self.class.get("/api", query: {
-            apikey: api_key,
-            chainid: chain_id,
-            module: "account"
-          }.merge(params))
-          handle_response(response)
-        end
-      rescue RateLimitError => e
-        raise if attempts > MAX_RETRIES
-
-        Rails.logger.warn("Provider::Etherscan - rate limited (attempt #{attempts}/#{MAX_RETRIES}): #{e.message}")
-        sleep(RETRY_BASE_DELAY * (2**(attempts - 1)))
-        retry
+        response = self.class.get("/api", query: { apikey: api_key, chainid: chain_id, module: "account" }.merge(params))
+        handle_response(response)
       end
     end
 
