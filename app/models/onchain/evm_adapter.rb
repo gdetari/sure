@@ -3,7 +3,7 @@
 # Every EVM network, read through an interchangeable explorer backend.
 #
 # One adapter class serves all of them: the network's identity (its label,
-# native coin and explorer URL) is data in the chain registry, so adding a
+# native coin and chain ID) is data in the chain registry, so adding a
 # network is a registry entry rather than a branch here.
 #
 # The unit being tracked is the (chain, address) couple. A 0x address is valid on
@@ -23,11 +23,11 @@ class Onchain::EvmAdapter
   # thousands of tokens looking credible, while holding value separates them.
   DUST_VALUE = 1.to_d
 
-  attr_reader :chain, :explorer_url, :etherscan_chain_id
+  attr_reader :chain, :chain_id, :etherscan_chain_id
 
-  def initialize(chain:, explorer_url:, etherscan_chain_id: nil, credentials: {})
+  def initialize(chain:, chain_id:, etherscan_chain_id: nil, credentials: {})
     @chain = chain.to_s
-    @explorer_url = explorer_url
+    @chain_id = chain_id
     @etherscan_chain_id = etherscan_chain_id
     @credentials = credentials
   end
@@ -42,16 +42,12 @@ class Onchain::EvmAdapter
     address.to_s.strip.downcase
   end
 
-  # Deliberately asks the keyless backend: its address summary reports token
-  # holdings as well as the coin balance, so a wallet holding only ERC-20 tokens
-  # is still found, and it costs exactly one request. An explorer being down
-  # must not break the linking flow, so a failure means "not detected here"
-  # rather than an error the user has to interpret.
+  # Blockscout's address summary detects token-only wallets in one request.
   def has_activity?(address)
     return false unless valid_address?(address)
 
-    detection_backend.has_activity?(address)
-  rescue StandardError => e
+    wrap_provider_errors { detection_backend.has_activity?(address) }
+  rescue Onchain::Chains::UnreachableError, Onchain::Chains::RateLimitedError => e
     Rails.logger.warn("Onchain::EvmAdapter(#{chain}) - activity probe failed: #{e.class}")
     # Not false: an explorer that timed out has not told us the address is
     # empty here, and answering "no" would let detection settle on another
@@ -63,11 +59,11 @@ class Onchain::EvmAdapter
     raise Onchain::Chains::Error, "Invalid EVM address" unless valid_address?(address)
 
     wrap_provider_errors do
-      tokens = token_assets(address)
+      assets = [ native_asset(address), *token_assets(address) ]
       movements = best_effort_movements { movements(address) }
 
       Onchain::Snapshot.new(
-        assets: [ native_asset(address), *tokens ],
+        assets: assets,
         movements: movements || [],
         history_truncated: movements.nil? || history_backend.truncated,
         assets_truncated: @assets_truncated
@@ -84,44 +80,38 @@ class Onchain::EvmAdapter
     ]
   end
 
-  # What an address currently holds always comes from the keyless indexer, even
-  # when a key is configured. Etherscan has no free endpoint that enumerates an
-  # address's tokens, so a keyed read would have to sum transfer history — which
-  # is wrong for a rebasing token and wrong outright once history is capped. The
-  # summary that answers this is one request either way, so there is nothing to
-  # buy here.
+  # Blockscout enumerates current token holdings even when transfer history is capped.
   def balance_backend
-    keyless_backend
+    @balance_backend ||= Provider::Blockscout.new(chain_id: chain_id, max_pages: Onchain::HistoryBudget.pages)
   end
 
-  # History is where a key actually helps: it is the paginated, rate-limited
-  # half of the work.
   def history_backend
-    etherscan_backend || keyless_backend
+    etherscan_backend || balance_backend
   end
 
   private
     attr_reader :credentials
 
+    def wrap_provider_errors
+      super do
+        yield
+      rescue Provider::Blockscout::MissingApiKeyError => e
+        raise Onchain::Chains::MissingCredentialsError, e.message
+      rescue Provider::Blockscout::AccessDeniedError => e
+        raise Onchain::Chains::AccessDeniedError, e.message
+      end
+    end
+
     def definition
       Onchain::Chains.find!(chain)
     end
 
-    def keyless_backend
-      @keyless_backend ||= Provider::Blockscout.new(
-        chain: chain,
-        base_url: explorer_url,
-        max_pages: Onchain::HistoryBudget.pages
-      )
-    end
-
-    # Detection asks every candidate network in turn on the request thread, so it
+    # Detection probes candidate networks concurrently on a shared deadline. It
     # reads with the detection budget rather than the sync's: one short attempt,
     # no retry.
     def detection_backend
       @detection_backend ||= Provider::Blockscout.new(
-        chain: chain,
-        base_url: explorer_url,
+        chain_id: chain_id,
         request_timeout: Onchain::DetectionBudget.timeout,
         max_retries: Onchain::DetectionBudget.retries
       )

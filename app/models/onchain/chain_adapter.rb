@@ -80,6 +80,8 @@ module Onchain::ChainAdapter
   # that timed out or refused has not reported an empty address. An override
   # that collapses the third into false lets detection settle on another chain
   # without asking, which is how a wallet gets linked to the wrong network.
+  # An adapter may raise AccessDeniedError so detection can report a credential
+  # failure shared by every candidate.
   def has_activity?(address)
     valid_address?(address)
   end

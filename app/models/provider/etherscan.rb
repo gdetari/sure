@@ -2,10 +2,8 @@
 
 # Keyed EVM data source backed by Etherscan's v2 API.
 #
-# A history-only backend: optional, and only for the chain the registry gives an
-# Etherscan chain id. A key buys a higher rate limit on the paginated half of the
-# work and nothing else, so balances and activity detection stay on the keyless
-# indexer and this class refuses to answer them.
+# An optional history source for Ethereum. Blockscout supplies wallet balances
+# and activity detection regardless of the family's history provider.
 class Provider::Etherscan
   include Provider::EvmExplorer
   include HTTParty
@@ -44,18 +42,18 @@ class Provider::Etherscan
   # Not implemented on purpose. Etherscan's one-request answer is the native
   # balance, which reports "nothing here" for a wallet holding only ERC-20
   # tokens, and the alternative is reading transfer history. Detection therefore
-  # stays on the keyless indexer, whose address summary answers correctly in one
+  # stays on Blockscout, whose address summary answers correctly in one
   # request.
   def has_activity?(_address)
-    raise NotImplementedError, "Etherscan cannot answer activity in one request; use the keyless backend"
+    raise NotImplementedError, "Etherscan cannot answer activity in one request; use Blockscout"
   end
 
   # Not implemented on purpose. Etherscan has no free endpoint that enumerates an
   # address's tokens, and summing transfer history cannot see a rebasing token's
   # current balance — nor anything older than the history cap. Balances always
-  # come from the keyless indexer, so both backends agree on what is held.
+  # come from Blockscout, so both backends agree on what is held.
   def token_balances(_address)
-    raise NotImplementedError, "Etherscan cannot enumerate token balances; use the keyless backend"
+    raise NotImplementedError, "Etherscan cannot enumerate token balances; use Blockscout"
   end
 
   def transfers(address)

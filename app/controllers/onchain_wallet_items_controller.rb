@@ -58,7 +58,8 @@ class OnchainWalletItemsController < ApplicationController
 
     @chain = requested_chain
     if @chain.blank?
-      detection = OnchainWalletItem::ChainDetector.new(preview_item, @address).detect
+      detection = read_explorer(@chain) { OnchainWalletItem::ChainDetector.new(preview_item, @address).detect }
+      return render_new_wallet(@provider_error) if detection.nil?
       return render_new_wallet(t(".errors.unrecognized_address")) if detection.unrecognized?
 
       if detection.ambiguous?
@@ -226,11 +227,18 @@ class OnchainWalletItemsController < ApplicationController
       Onchain::Chains.exists?(chain) ? chain : nil
     end
 
-    # Expected data-source failures become a localized message. Anything else is
-    # a bug: the user gets a generic message and the details go to the debug log,
-    # never into the response.
     def fetch_snapshot(chain, address)
-      OnchainWalletItem::Importer.new(preview_item).fetch_snapshot(chain: chain, address: address)
+      read_explorer(chain) { OnchainWalletItem::Importer.new(preview_item).fetch_snapshot(chain: chain, address: address) }
+    end
+
+    def read_explorer(chain)
+      yield
+    rescue Onchain::Chains::MissingCredentialsError
+      @provider_error = t("onchain_wallet_items.errors.explorer_key_missing")
+      nil
+    rescue Onchain::Chains::AccessDeniedError
+      @provider_error = t("onchain_wallet_items.errors.explorer_rejected")
+      nil
     rescue Onchain::Chains::RateLimitedError
       @provider_error = t("onchain_wallet_items.errors.rate_limited")
       nil

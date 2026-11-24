@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-# The contract an EVM data source fulfils, so Onchain::EvmAdapter can use a
-# keyless public indexer or a keyed one without changing.
+# The data source interface used by Onchain::EvmAdapter.
 #
 # Amounts are returned in each token's smallest unit ("raw"), as strings or
 # integers, because that is what every explorer reports and the only lossless

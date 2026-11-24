@@ -1,12 +1,6 @@
 # frozen_string_literal: true
 
-# Keyless EVM data source backed by a public Blockscout instance.
-#
-# The default backend for every supported network: no API key, and its address
-# summary answers "is this address worth tracking here?" in a single request,
-# including for wallets that hold only tokens. The instance URL comes from the
-# chain registry; self-hosters running their own indexer can override it with
-# BLOCKSCOUT_<CHAIN>_URL.
+# Blockscout's multichain REST API routes each network through its EVM chain ID.
 class Provider::Blockscout
   include Provider::EvmExplorer
   include HTTParty
@@ -16,6 +10,8 @@ class Provider::Blockscout
   class Error < StandardError; end
   class RateLimitError < Error; end
   class ApiError < Error; end
+  class AccessDeniedError < Error; end
+  class MissingApiKeyError < Error; end
 
   # Flags the v2 address summary returns alongside the coin balance. They are
   # what lets a token-only wallet (zero native balance) be detected without
@@ -29,9 +25,20 @@ class Provider::Blockscout
   MAX_RETRIES = 3
   RETRY_BASE_DELAY = 0.5
 
-  default_options.merge!({ timeout: 30 }.merge(httparty_ssl_options))
+  base_uri "https://api.blockscout.com"
+  default_options.merge!({ timeout: 30, follow_redirects: false }.merge(httparty_ssl_options))
+  headers "Accept" => "application/json"
 
-  attr_reader :chain, :base_url
+  # Parallel chain probes share the same key and request allowance.
+  @request_mutex = Mutex.new
+  def self.throttle_request
+    @request_mutex.synchronize do
+      now = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+      remaining = @last_request_at.to_f + MIN_REQUEST_INTERVAL - now
+      sleep(remaining) if remaining.positive?
+      @last_request_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    end
+  end
 
   # True when any collection stopped on the page budget rather than on its last
   # page.
@@ -39,9 +46,11 @@ class Provider::Blockscout
 
   # Detection reads on the request thread and cannot afford the sync's patience,
   # so both the per-request timeout and the retry count are the caller's to set.
-  def initialize(chain:, base_url:, max_pages: DEFAULT_MAX_PAGES, request_timeout: nil, max_retries: MAX_RETRIES)
-    @chain = chain.to_s
-    @base_url = ENV["BLOCKSCOUT_#{@chain.upcase}_URL"].presence || base_url
+  def initialize(chain_id:, max_pages: DEFAULT_MAX_PAGES, request_timeout: nil, max_retries: MAX_RETRIES)
+    @chain_id = Integer(chain_id)
+    @api_key = ENV["BLOCKSCOUT_API_KEY"].to_s.strip.presence
+    raise MissingApiKeyError, "Set BLOCKSCOUT_API_KEY to read EVM wallets" unless @api_key
+
     @max_pages = max_pages
     @request_timeout = request_timeout
     @max_retries = max_retries
@@ -50,14 +59,12 @@ class Provider::Blockscout
 
   def has_activity?(address)
     summary = address_summary(address)
-    return false unless summary.is_a?(Hash)
 
     summary["coin_balance"].to_s.to_d.positive? || ACTIVITY_FLAGS.any? { |flag| summary[flag] == true }
   end
 
   def native_balance(address)
-    summary = address_summary(address)
-    summary.is_a?(Hash) ? summary["coin_balance"].to_s : "0"
+    address_summary(address)["coin_balance"].to_s
   end
 
   # This endpoint takes no `type` filter — passing one is a 422 — and it answers
@@ -163,7 +170,12 @@ class Provider::Blockscout
 
     def address_summary(address)
       @address_summary ||= {}
-      @address_summary[address.to_s] ||= api_get("/api/v2/addresses/#{encode(address)}")
+      @address_summary[address.to_s] ||= begin
+        data = api_get("/api/v2/addresses/#{encode(address)}")
+        raise ApiError, "Invalid Blockscout address summary" unless data.is_a?(Hash) && data.key?("coin_balance")
+
+        data
+      end
     end
 
     def encode(address)
@@ -187,10 +199,11 @@ class Provider::Blockscout
           break
         end
 
-        page = Array(body.is_a?(Hash) ? body["items"] : nil)
+        page = body["items"]
+        raise ApiError, "Invalid Blockscout collection" unless page.is_a?(Array)
         items.concat(page)
 
-        next_params = body.is_a?(Hash) ? body["next_page_params"] : nil
+        next_params = body["next_page_params"]
         break if next_params.blank? || page.empty?
       end
 
@@ -205,34 +218,33 @@ class Provider::Blockscout
 
       begin
         attempts += 1
-        throttle_request
-        translate_transport_errors { handle_response(self.class.get("#{base_url}#{path}", **request_options)) }
+        self.class.throttle_request
+        translate_transport_errors { handle_response(self.class.get("/#{@chain_id}#{path}", **request_options)) }
       rescue RateLimitError => e
         raise if attempts > @max_retries
 
-        Rails.logger.warn("Provider::Blockscout(#{chain}) - rate limited (attempt #{attempts}/#{@max_retries}): #{e.message}")
+        Rails.logger.warn("Provider::Blockscout(#{@chain_id}) - rate limited (attempt #{attempts}/#{@max_retries}): #{e.message}")
         sleep(RETRY_BASE_DELAY * (2**(attempts - 1)))
         retry
       end
     end
 
-    def request_options(**options)
-      return options if @request_timeout.nil?
-
-      options.merge(timeout: @request_timeout)
-    end
-
-    def throttle_request
-      @last_request_at ||= Time.at(0)
-      remaining = MIN_REQUEST_INTERVAL - (Time.current - @last_request_at)
-      sleep(remaining) if remaining.positive?
-      @last_request_at = Time.current
+    def request_options
+      options = { headers: { "Authorization" => "Bearer #{@api_key}" } }
+      options[:timeout] = @request_timeout if @request_timeout
+      options
     end
 
     def handle_response(response)
+      if [ 401, 402, 403 ].include?(response.code) || response.headers["cf-mitigated"] == "challenge"
+        raise AccessDeniedError, "Blockscout rejected access to chain #{@chain_id}. Check BLOCKSCOUT_API_KEY."
+      end
       raise RateLimitError, "Blockscout rate limit exceeded" if response.code == 429
       raise ApiError, "Blockscout API error: #{response.code}" unless response.code.between?(200, 299)
 
-      response.parsed_response
+      data = response.parsed_response
+      return data if data.is_a?(Hash) || data.is_a?(Array)
+
+      raise ApiError, "Blockscout returned an invalid API response"
     end
 end

@@ -71,6 +71,8 @@ x-rails-env: &rails_env
   DB_HOST: db
   DB_PORT: 5432
   REDIS_URL: redis://redis:6379/1
+  # One Blockscout multichain API key for EVM wallet linking and sync.
+  BLOCKSCOUT_API_KEY: ${BLOCKSCOUT_API_KEY:-}
   # Seconds a missed scheduled job may run late (default 600); see docs/hosting/docker.md
   SIDEKIQ_CRON_GRACE_PERIOD_SECONDS: ${SIDEKIQ_CRON_GRACE_PERIOD_SECONDS:-}
   # Optional privacy policy and terms URLs for the footer links; see docs/hosting/docker.md

@@ -22,6 +22,8 @@ fr:
       address_required: Saisissez une adresse de portefeuille.
       already_linked: Cette adresse est déjà suivie sur ce réseau. Utilisez « Vérifier les jetons » pour changer les actifs suivis.
       chain_unreachable: L'explorateur public de ce réseau est injoignable. Réessayez dans un instant.
+      explorer_key_missing: Demandez à votre administrateur Sure de configurer BLOCKSCOUT_API_KEY pour synchroniser les portefeuilles EVM.
+      explorer_rejected: Blockscout a refusé la demande de consultation du portefeuille. Demandez à votre administrateur Sure de vérifier la clé API et ses droits d’accès.
       rate_limited: L'explorateur public limite actuellement le débit des requêtes. Réessayez dans quelques minutes.
       unexpected: Un problème est survenu à la lecture de ce portefeuille. Les détails ont été consignés pour le support.
       unrecognized_address: Cela ne ressemble à une adresse d'aucun réseau pris en charge.

@@ -14,6 +14,8 @@ module Onchain
     # whatever their explorer raises into these, so callers — the controller
     # above all — never need to know one chain's error types from another's.
     UnreachableError = Class.new(Error)
+    AccessDeniedError = Class.new(Error)
+    MissingCredentialsError = Class.new(AccessDeniedError)
     RateLimitedError = Class.new(Error)
 
     # Assets identified by their address alone.
@@ -82,12 +84,12 @@ module Onchain
     # `etherscan_chain_id` is set only where a family-supplied Etherscan key is
     # accepted, which today is Ethereum alone.
     EVM = [
-      { key: ETHEREUM, symbol: "ETH",  name: "Ethereum", explorer_url: "https://eth.blockscout.com",      etherscan_chain_id: "1" },
-      { key: "base",     symbol: "ETH",  name: "Ethereum", explorer_url: "https://base.blockscout.com" },
-      { key: "arbitrum", symbol: "ETH",  name: "Ethereum", explorer_url: "https://arbitrum.blockscout.com" },
-      { key: "optimism", symbol: "ETH",  name: "Ethereum", explorer_url: "https://optimism.blockscout.com" },
-      { key: "polygon",  symbol: "POL",  name: "Polygon",  explorer_url: "https://polygon.blockscout.com" },
-      { key: "gnosis",   symbol: "XDAI", name: "xDai",     explorer_url: "https://gnosis.blockscout.com" }
+      { key: ETHEREUM,   symbol: "ETH",  name: "Ethereum", chain_id: 1, etherscan_chain_id: "1" },
+      { key: "base",     symbol: "ETH",  name: "Ethereum", chain_id: 8453 },
+      { key: "arbitrum", symbol: "ETH",  name: "Ethereum", chain_id: 42161 },
+      { key: "optimism", symbol: "ETH",  name: "Ethereum", chain_id: 10 },
+      { key: "polygon",  symbol: "POL",  name: "Polygon",  chain_id: 137 },
+      { key: "gnosis",   symbol: "XDAI", name: "xDai",     chain_id: 100 }
     ].freeze
 
     SOLANA = "solana"
@@ -112,7 +114,7 @@ module Onchain
           adapter_class_name: "Onchain::EvmAdapter",
           adapter_options: {
             chain: evm[:key],
-            explorer_url: evm[:explorer_url],
+            chain_id: evm.fetch(:chain_id),
             etherscan_chain_id: evm[:etherscan_chain_id]
           }.compact
         )

@@ -22,6 +22,8 @@ nl:
       address_required: "Voer een walletadres in."
       already_linked: "Dat adres wordt op dit netwerk al gevolgd. Gebruik Tokens controleren om te wijzigen welke assets worden gevolgd."
       chain_unreachable: "De openbare explorer voor dit netwerk is niet bereikbaar. Probeer het zo meteen opnieuw."
+      explorer_key_missing: Vraag je Sure-beheerder om BLOCKSCOUT_API_KEY in te stellen voor het synchroniseren van EVM-wallets.
+      explorer_rejected: Blockscout heeft het verzoek om de wallet uit te lezen geweigerd. Vraag je Sure-beheerder om de API-sleutel en de bijbehorende toegangsrechten te controleren.
       rate_limited: "De openbare explorer beperkt momenteel het aantal verzoeken. Probeer het over een paar minuten opnieuw."
       unexpected: "Er ging iets mis bij het uitlezen van deze wallet. De details zijn vastgelegd voor support."
       unrecognized_address: "Dat lijkt geen adres op een van de ondersteunde netwerken."

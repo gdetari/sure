@@ -350,11 +350,11 @@ nb:
         disconnect_all_confirm: Dette fjerner alle adresser som følges, og kontoene deres. Vil du fortsette?
         etherscan_api_key_label: Etherscan-API-nøkkel (valgfritt)
         etherscan_api_key_placeholder: Lim inn en Etherscan-API-nøkkel
-        etherscan_hint: Ethereum-data kan leses uten nøkkel. En Etherscan-nøkkel øker bare forespørselsgrensen for Ethereum.
+        etherscan_hint: Med en Etherscan-nøkkel hentes overføringshistorikken for Ethereum fra Etherscan. Blockscout leverer saldoene for EVM-nettverk.
         keep_etherscan_api_key: La stå tomt for å beholde den eksisterende nøkkelen
         manage_wallets: Administrer lommebøker
-        keyless_body: Sure leser bare offentlige blokkjededata. Ingen nøkler, gjenopprettingsfraser eller signaturer brukes, og ingenting kan brukes eller overføres.
-        keyless_title: Kun lesetilgang, ingen nøkler kreves
+        keyless_body: Sure leser offentlige lommebokadresser og kan ikke bruke midlene. EVM-nettverk bruker serverens API-nøkkel for Blockscout.
+        keyless_title: Lesetilgang til lommebøker
         save: Lagre
         sync_start_date_hint: Overføringer før denne datoen ignoreres. La stå tomt for å importere alt blokkutforskeren rapporterer.
         sync_start_date_label: Ignorer overføringer før

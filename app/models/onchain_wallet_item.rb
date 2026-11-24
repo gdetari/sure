@@ -26,8 +26,7 @@ class OnchainWalletItem < ApplicationRecord
 
   before_validation :strip_credentials
 
-  # Self-custody needs no credentials: every chain is readable keyless. The
-  # optional Etherscan key only raises Ethereum's rate limit.
+  # A family can link wallets without storing credentials on the connection.
   def credentials_configured?
     true
   end

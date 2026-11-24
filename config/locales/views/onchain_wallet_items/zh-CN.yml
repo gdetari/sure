@@ -22,6 +22,8 @@ zh-CN:
       address_required: 请输入钱包地址。
       already_linked: 该地址已在此网络上被追踪。请使用“检查代币”来更改追踪的资产。
       chain_unreachable: 无法连接此网络的公共区块浏览器。请稍后重试。
+      explorer_key_missing: 请联系 Sure 管理员设置 BLOCKSCOUT_API_KEY，以启用 EVM 钱包同步。
+      explorer_rejected: Blockscout 拒绝了读取钱包的请求。请联系 Sure 管理员检查 API 密钥及其访问权限。
       rate_limited: 公共区块浏览器目前正在对请求进行限流。请在几分钟后重试。
       unexpected: 读取此钱包时发生错误。详情已记录以供技术支持。
       unrecognized_address: 该地址似乎不属于任何受支持的网络。

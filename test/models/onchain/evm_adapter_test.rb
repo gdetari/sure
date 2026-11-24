@@ -7,7 +7,13 @@ class Onchain::EvmAdapterTest < ActiveSupport::TestCase
   USDC = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"
 
   setup do
+    @previous_blockscout_key = ENV["BLOCKSCOUT_API_KEY"]
+    ENV["BLOCKSCOUT_API_KEY"] = "test-blockscout-key"
     @adapter = Onchain::Chains.adapter_for(Onchain::Chains::ETHEREUM)
+  end
+
+  teardown do
+    ENV["BLOCKSCOUT_API_KEY"] = @previous_blockscout_key
   end
 
   test "accepts a 0x address and rejects anything else without a network call" do
@@ -88,6 +94,37 @@ class Onchain::EvmAdapterTest < ActiveSupport::TestCase
     assert_equal BigDecimal("2.5"), snapshot.find_asset(kind: "erc20", contract: USDC).quantity
     assert_empty snapshot.movements
     assert snapshot.history_truncated?
+  end
+
+  test "a Cloudflare challenge stops the balance read even when the HTTP status is successful" do
+    challenge = stub_request(:get, summary_url).to_return(
+      status: 200, headers: { "cf-mitigated" => "challenge", "Content-Type" => "text/html" }, body: "<html></html>"
+    )
+
+    assert_raises Onchain::Chains::AccessDeniedError do
+      @adapter.fetch_snapshot(ADDRESS)
+    end
+    assert_requested challenge, times: 1
+  end
+
+  test "when only history is blocked, the snapshot keeps balances and marks history incomplete" do
+    stub_summary(coin_balance: "1000000000000000000")
+    stub_token_balances([])
+    denied = stub_request(:get, "#{summary_url}/transactions").to_return(status: 403)
+
+    snapshot = @adapter.fetch_snapshot(ADDRESS)
+
+    assert_equal 1, snapshot.find_asset(kind: "native").quantity
+    assert snapshot.history_truncated?
+    assert_requested denied, times: 1
+  end
+
+  test "a successful HTTP response containing an HTML page cannot zero the wallet" do
+    stub_request(:get, summary_url).to_return(status: 200, headers: { "Content-Type" => "text/html" }, body: "<html>Unavailable</html>")
+
+    assert_raises Onchain::Chains::UnreachableError do
+      @adapter.fetch_snapshot(ADDRESS)
+    end
   end
 
   test "a timed-out explorer is reported as unreachable, not as an unexpected failure" do
@@ -325,11 +362,25 @@ class Onchain::EvmAdapterTest < ActiveSupport::TestCase
     end
   end
 
-  test "each network reads its own explorer" do
-    ethereum = Onchain::Chains.adapter_for(Onchain::Chains::ETHEREUM)
-    base = Onchain::Chains.adapter_for("base")
+  test "all six EVM networks probe the multichain API with the same credential" do
+    { "ethereum" => 1, "base" => 8453, "arbitrum" => 42161, "optimism" => 10, "polygon" => 137, "gnosis" => 100 }.each do |chain, chain_id|
+      probe = stub_request(:get, "https://api.blockscout.com/#{chain_id}/api/v2/addresses/#{ADDRESS}")
+        .with(headers: { "Authorization" => "Bearer test-blockscout-key" })
+        .to_return(headers: { "Content-Type" => "application/json" }, body: { coin_balance: "1" }.to_json)
 
-    assert_not_equal ethereum.explorer_url, base.explorer_url
+      assert Onchain::Chains.adapter_for(chain).has_activity?(ADDRESS), chain
+      assert_requested probe, times: 1
+    end
+  end
+
+  test "a redirect from the multichain API cannot forward the credential" do
+    redirect = stub_request(:get, summary_url).to_return(status: 302, headers: { "Location" => "https://another.example/" })
+
+    assert_raises Onchain::Chains::UnreachableError do
+      @adapter.fetch_snapshot(ADDRESS)
+    end
+    assert_requested redirect, times: 1
+    assert_not_requested :get, "https://another.example/"
   end
 
   private
@@ -346,7 +397,7 @@ class Onchain::EvmAdapterTest < ActiveSupport::TestCase
     end
 
     def explorer_url
-      @adapter.explorer_url
+      "https://api.blockscout.com/1"
     end
 
     def stub_summary(coin_balance:, flags: {})
