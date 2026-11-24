@@ -118,7 +118,7 @@ Network detection makes one attempt per chain within its shared deadline.
 | Network | Requests per sync |
 |---|---|
 | Bitcoin | 1 + up to 10 history pages |
-| EVM | 1 summary + 1 token balance request + up to 10 pages of transfers + up to 10 pages of token transfers |
+| EVM (Blockscout) | 1 address summary + up to 10 pages each of token balances, transactions and token transfers |
 | Solana | ~2 + up to 25 transaction reads |
 | Cosmos Hub | 3, plus a page per extra 200 validators staked with |
 | Polkadot | 1 |
@@ -160,6 +160,10 @@ Solana RPC offers no such signal, so there the order is by mint address —
 arbitrary, but identical between syncs, which is what stops the cap from
 reshuffling a wallet every night. The cap is stated in the review screen and in
 Manage wallets whenever it applies.
+
+Blockscout usually returns token balances in one response. If it splits the
+balances across pages and Sure reaches the page limit, tracked tokens missing
+from those pages keep their last known quantities.
 
 EVM network detection checks one address summary per candidate chain. If a
 chain times out, you can still select a network yourself. If every candidate

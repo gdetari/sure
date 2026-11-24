@@ -362,6 +362,26 @@ class Onchain::EvmAdapterTest < ActiveSupport::TestCase
     end
   end
 
+  test "a capped balance page protects missing holdings without marking complete history as partial" do
+    Onchain::HistoryBudget.stubs(:pages).returns(1)
+    stub_summary(coin_balance: "1000000000000000000")
+    row = erc20(contract: USDC, symbol: "USDC", value: "7000000")
+    stub_token_balances({ items: [ row ], next_page_params: { id: 2 } })
+    stub_transactions([])
+    stub_token_transfers([])
+
+    first = @adapter.fetch_snapshot(ADDRESS)
+    assert_predicate first, :assets_truncated?
+    assert_not first.history_truncated?
+    assert_equal 7, first.find_asset(kind: "erc20", contract: USDC).quantity
+
+    stub_summary(coin_balance: "0")
+    stub_token_balances([])
+    second = @adapter.fetch_snapshot(ADDRESS)
+    assert_equal 0, second.find_asset(kind: "native").quantity
+    assert_not second.assets_truncated?
+  end
+
   test "all six EVM networks probe the multichain API with the same credential" do
     { "ethereum" => 1, "base" => 8453, "arbitrum" => 42161, "optimism" => 10, "polygon" => 137, "gnosis" => 100 }.each do |chain, chain_id|
       probe = stub_request(:get, "https://api.blockscout.com/#{chain_id}/api/v2/addresses/#{ADDRESS}")

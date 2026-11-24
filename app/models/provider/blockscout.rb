@@ -23,7 +23,6 @@ class Provider::Blockscout
   DEFAULT_MAX_PAGES = 10
   MIN_REQUEST_INTERVAL = 0.2
   MAX_RETRIES = 3
-  RETRY_BASE_DELAY = 0.5
 
   base_uri "https://api.blockscout.com"
   default_options.merge!({ timeout: 30, follow_redirects: false }.merge(httparty_ssl_options))
@@ -40,19 +39,18 @@ class Provider::Blockscout
     end
   end
 
-  # True when any collection stopped on the page budget rather than on its last
-  # page.
+  # Whether the last transfer history read stopped on the page budget.
   attr_reader :truncated
 
   # Detection reads on the request thread and cannot afford the sync's patience,
   # so both the per-request timeout and the retry count are the caller's to set.
   def initialize(chain_id:, max_pages: DEFAULT_MAX_PAGES, request_timeout: nil, max_retries: MAX_RETRIES)
     @chain_id = Integer(chain_id)
-    @api_key = ENV["BLOCKSCOUT_API_KEY"].to_s.strip.presence
-    raise MissingApiKeyError, "Set BLOCKSCOUT_API_KEY to read EVM wallets" unless @api_key
+    key = ENV["BLOCKSCOUT_API_KEY"].to_s.strip
+    raise MissingApiKeyError, "Set BLOCKSCOUT_API_KEY to read EVM wallets" if key.empty?
 
     @max_pages = max_pages
-    @request_timeout = request_timeout
+    @request_options = { headers: { "Authorization" => "Bearer #{key}" }, timeout: request_timeout || 30 }
     @max_retries = max_retries
     @truncated = false
   end
@@ -67,17 +65,37 @@ class Provider::Blockscout
     address_summary(address)["coin_balance"].to_s
   end
 
-  # This endpoint takes no `type` filter — passing one is a 422 — and it answers
-  # with every token standard the address holds, so ERC-20 has to be selected
-  # here. An ERC-721 or ERC-1155 row would otherwise be read as a fungible
-  # balance, turning one NFT into "1 token".
+  def holdings(address)
+    native = native_balance(address)
+    tokens, truncated = token_holdings(address)
+    Holdings.new(native, tokens, truncated)
+  end
+
   def token_balances(address)
-    paginate("/api/v2/addresses/#{encode(address)}/token-balances").filter_map do |entry|
+    token_holdings(address).first
+  end
+
+  def transfers(address)
+    transactions, more_transactions = paginate("#{address_path(address)}/transactions")
+    transfers, more_transfers = paginate("#{address_path(address)}/token-transfers?type=ERC-20")
+    @truncated = more_transactions || more_transfers
+    transactions.filter_map { |row| native_transfer(row, address) } +
+      transfers.filter_map { |row| token_transfer(row, address) }
+  end
+
+  private
+    def token_holdings(address)
+      rows, truncated = paginate("#{address_path(address)}/token-balances")
+      [ rows.filter_map { |row| token_balance(row) }, truncated ]
+    end
+
+    # The balances endpoint returns every token standard and rejects a type filter.
+    def token_balance(entry)
       token_data = entry["token"].to_h
-      next unless token_data["type"].to_s == ERC20_TYPE
+      return unless token_data["type"] == ERC20_TYPE
 
       contract = contract_of(token_data)
-      next if contract.blank?
+      return unless contract
 
       {
         contract: contract,
@@ -92,74 +110,43 @@ class Provider::Blockscout
         rate: token_data["exchange_rate"].to_s.presence&.to_d
       }
     end
-  end
 
-  def transfers(address)
-    native_transfers(address) + token_transfers(address)
-  end
+    def native_transfer(transaction, address)
+      raw_amount = transaction["value"].to_s.to_i * transfer_direction(address, from: transaction.dig("from", "hash"), to: transaction.dig("to", "hash"))
+      return if raw_amount.zero?
 
-  private
-    def native_transfers(address)
-      paginate("/api/v2/addresses/#{encode(address)}/transactions").filter_map do |transaction|
-        raw_amount = signed_amount(transaction["value"], from: transaction.dig("from", "hash"), to: transaction.dig("to", "hash"), address: address)
-        next if raw_amount.zero?
-
-        {
-          external_id: transaction["hash"],
-          contract: nil,
-          symbol: nil,
-          decimals: 18,
-          raw_amount: raw_amount,
-          timestamp: parse_time(transaction["timestamp"])
-        }
-      end
+      {
+        external_id: transaction["hash"],
+        contract: nil,
+        symbol: nil,
+        decimals: 18,
+        raw_amount: raw_amount,
+        timestamp: parse_time(transaction["timestamp"])
+      }
     end
 
-    def token_transfers(address)
-      paginate("/api/v2/addresses/#{encode(address)}/token-transfers?type=ERC-20").filter_map do |transfer|
-        token_data = transfer["token"].to_h
-        total = transfer["total"].to_h
-        contract = contract_of(token_data)
-        next if contract.blank?
+    def token_transfer(transfer, address)
+      token_data = transfer["token"].to_h
+      total = transfer["total"].to_h
+      contract = contract_of(token_data)
+      return if contract.blank?
 
-        raw_amount = signed_amount(total["value"], from: transfer.dig("from", "hash"), to: transfer.dig("to", "hash"), address: address)
-        next if raw_amount.zero?
+      raw_amount = total["value"].to_s.to_i * transfer_direction(address, from: transfer.dig("from", "hash"), to: transfer.dig("to", "hash"))
+      return if raw_amount.zero?
 
-        {
-          external_id: transfer_external_id(transfer["transaction_hash"], contract, transfer["log_index"]),
-          contract: contract,
-          symbol: token_data["symbol"],
-          decimals: (total["decimals"] || token_data["decimals"]).to_i,
-          raw_amount: raw_amount,
-          timestamp: parse_time(transfer["timestamp"])
-        }
-      end
+      {
+        external_id: transfer_external_id(transfer["transaction_hash"], contract, transfer["log_index"]),
+        contract: contract,
+        symbol: token_data["symbol"],
+        decimals: (total["decimals"] || token_data["decimals"]).to_i,
+        raw_amount: raw_amount,
+        timestamp: parse_time(transfer["timestamp"])
+      }
     end
 
-    # A transaction can emit several transfers of the same token involving the
-    # same address — swap routers and batch payouts do it routinely — so the
-    # transaction hash and the contract are not unique together. The log index is
-    # what makes an event unique within a transaction; the contract is only a
-    # fallback for an instance that does not report one.
-    def transfer_external_id(transaction_hash, contract, log_index)
-      [ transaction_hash, log_index.nil? ? contract : log_index ].join("_")
-    end
-
-    # Blockscout renamed this field; accept both so an older self-hosted
-    # instance keeps working.
+    # Both contract fields occur in Blockscout responses.
     def contract_of(token)
       (token["address_hash"] || token["address"]).to_s.presence&.downcase
-    end
-
-    def signed_amount(value, from:, to:, address:)
-      amount = value.to_s.presence&.to_i || 0
-      target = address.to_s.downcase
-      received = to.to_s.downcase == target
-      sent = from.to_s.downcase == target
-
-      return 0 if received == sent # neither, or a transfer to itself
-
-      received ? amount : -amount
     end
 
     def parse_time(value)
@@ -169,17 +156,14 @@ class Provider::Blockscout
     end
 
     def address_summary(address)
-      @address_summary ||= {}
-      @address_summary[address.to_s] ||= begin
-        data = api_get("/api/v2/addresses/#{encode(address)}")
-        raise ApiError, "Invalid Blockscout address summary" unless data.is_a?(Hash) && data.key?("coin_balance")
+      data = api_get(address_path(address))
+      raise ApiError, "Invalid Blockscout address summary" unless data.is_a?(Hash) && data.key?("coin_balance")
 
-        data
-      end
+      data
     end
 
-    def encode(address)
-      ERB::Util.url_encode(address.to_s)
+    def address_path(address)
+      "/#{@chain_id}/api/v2/addresses/#{ERB::Util.url_encode(address.to_s)}"
     end
 
     def paginate(path)
@@ -194,10 +178,7 @@ class Provider::Blockscout
 
         # Some v2 collections (token-balances) return a bare, complete array;
         # the paginated ones wrap items with cursor params.
-        if body.is_a?(Array)
-          items.concat(body)
-          break
-        end
+        return [ items.concat(body), false ] if body.is_a?(Array)
 
         page = body["items"]
         raise ApiError, "Invalid Blockscout collection" unless page.is_a?(Array)
@@ -208,31 +189,14 @@ class Provider::Blockscout
       end
 
       # A cursor still in hand means there were more pages than the budget.
-      @truncated ||= next_params.present?
-
-      items
+      [ items, next_params.present? ]
     end
 
     def api_get(path)
-      attempts = 0
-
-      begin
-        attempts += 1
+      request_with_rate_limit_retries(@max_retries, source: "#{self.class.name}(#{@chain_id})") do
         self.class.throttle_request
-        translate_transport_errors { handle_response(self.class.get("/#{@chain_id}#{path}", **request_options)) }
-      rescue RateLimitError => e
-        raise if attempts > @max_retries
-
-        Rails.logger.warn("Provider::Blockscout(#{@chain_id}) - rate limited (attempt #{attempts}/#{@max_retries}): #{e.message}")
-        sleep(RETRY_BASE_DELAY * (2**(attempts - 1)))
-        retry
+        handle_response(self.class.get(path, **@request_options))
       end
-    end
-
-    def request_options
-      options = { headers: { "Authorization" => "Bearer #{@api_key}" } }
-      options[:timeout] = @request_timeout if @request_timeout
-      options
     end
 
     def handle_response(response)
