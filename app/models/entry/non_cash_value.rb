@@ -1,8 +1,11 @@
 class Entry::NonCashValue < Data.define(:kind, :quantity, :unit_price)
-  def self.for(entry)
-    return unless entry.amount&.zero? && entry.source.present?
+  READERS = {
+    "kraken" => KrakenAccount::LedgerProcessor,
+    "onchain_wallet" => OnchainWalletAccount::Processor
+  }.freeze
 
-    readers[entry.source]&.non_cash_value(entry.entryable)
+  def self.for(entry)
+    READERS[entry.source]&.non_cash_value(entry.entryable) if entry.amount&.zero?
   end
 
   def self.build(kind, quantity, unit_price: nil)
@@ -18,9 +21,4 @@ class Entry::NonCashValue < Data.define(:kind, :quantity, :unit_price)
   def value
     unit_price * quantity.abs if unit_price
   end
-
-  def self.readers
-    @readers ||= Provider::Factory.registered_adapters.flat_map { |adapter| adapter.non_cash_value_sources.to_a }.to_h
-  end
-  private_class_method :readers
 end

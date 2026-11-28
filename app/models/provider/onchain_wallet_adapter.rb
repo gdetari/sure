@@ -5,7 +5,6 @@ class Provider::OnchainWalletAdapter < Provider::Base
   include Provider::InstitutionMetadata
 
   Provider::Factory.register("OnchainWalletAccount", self)
-  self.non_cash_value_sources = { OnchainWalletAccount::Processor::SOURCE => OnchainWalletAccount::Processor }.freeze
 
   def self.supported_account_types
     %w[Crypto]

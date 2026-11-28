@@ -21,10 +21,7 @@ class OnchainTransferDisplayTest < ActionDispatch::IntegrationTest
     @security.prices.create!(date: @date, price: 2_000, currency: "USD")
     import_movements("sent" => "-0.10182887", "received" => "0.00000005")
 
-    get account_url(@account, tab: "activity")
-    assert_response :success
-    assert_value entry_for("sent"), "$203.66"
-    assert_value entry_for("received"), "< $0.01"
+    assert_activity_values "sent" => "$203.66", "received" => "< $0.01"
 
     [
       [ "sent", "$203.66 USD", "0.10182887" ],
@@ -44,11 +41,8 @@ class OnchainTransferDisplayTest < ActionDispatch::IntegrationTest
 
   test "a transfer without a dated quote is unavailable until it is priced" do
     import_movements("unpriced" => "0.25")
-    entry = entry_for("unpriced")
-    get account_url(@account, tab: "activity")
-    assert_response :success
-    assert_value entry, "Unavailable"
-    get transaction_url(entry)
+    assert_activity_values "unpriced" => "Unavailable"
+    get transaction_url(entry_for("unpriced"))
     assert_response :success
     assert_select "h3 .privacy-sensitive", text: "Unavailable"
     assert_detail "Quantity received", "0.25"
@@ -59,11 +53,8 @@ class OnchainTransferDisplayTest < ActionDispatch::IntegrationTest
     assert_no_difference -> { @account.entries.count } do
       @processor.repair_display_only_movements
     end
-    entry = entry_for("unpriced")
-    get account_url(@account, tab: "activity")
-    assert_response :success
-    assert_value entry, "$500.00"
-    assert_equal 0, entry.amount
+    assert_activity_values "unpriced" => "$500.00"
+    assert_equal 0, entry_for("unpriced").amount
   end
 
   private
@@ -77,10 +68,14 @@ class OnchainTransferDisplayTest < ActionDispatch::IntegrationTest
       @account.entries.find_by!(external_id: "onchain_#{@wallet.id}_#{id}")
     end
 
-    def assert_value(entry, expected)
-      assert_select "##{dom_id(entry.entryable)}" do
-        assert_select ".privacy-sensitive", text: expected
-        assert_select "span", text: "Value at transfer"
+    def assert_activity_values(expected)
+      get account_url(@account, tab: "activity")
+      assert_response :success
+      expected.each do |id, value|
+        assert_select "##{dom_id(entry_for(id).entryable)}" do
+          assert_select ".privacy-sensitive", text: value
+          assert_select "span", text: "Value at transfer"
+        end
       end
     end
 

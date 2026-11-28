@@ -77,12 +77,7 @@ class NonCashRewardDisplayTest < ActionDispatch::IntegrationTest
       entry.update!(source: "coinbase", amount: cash)
       entry.trade.update!(investment_activity_label: label, qty: 0.125, price: 200)
 
-      get account_url(entry.account, tab: "activity")
-      assert_response :success
-      assert_select "##{dom_id(entry.trade)} p.privacy-sensitive", text: expected
-      get trade_url(entry)
-      assert_response :success
-      assert_select "header h3 .privacy-sensitive", text: expected
+      assert_cash_display entry, expected
     end
   end
 
@@ -97,6 +92,12 @@ class NonCashRewardDisplayTest < ActionDispatch::IntegrationTest
       entry.update!(amount: amount)
       entry.trade.update!(investment_activity_label: label, qty: qty)
 
+      assert_cash_display entry, row_value, header_value
+    end
+  end
+
+  private
+    def assert_cash_display(entry, row_value, header_value = row_value)
       get account_url(entry.account, tab: "activity")
       assert_response :success
       assert_select "##{dom_id(entry.trade)} p.privacy-sensitive", text: row_value
@@ -106,9 +107,7 @@ class NonCashRewardDisplayTest < ActionDispatch::IntegrationTest
       assert_select "header h3 .privacy-sensitive", text: header_value
       assert_select "header h3 span", text: "Estimated value received (non-cash)", count: 0
     end
-  end
 
-  private
     def import_reward(type, subtype = "")
       @kraken.update!(
         raw_payload: { assets: [ { symbol: "ETH", price_usd: "4000" } ] },
