@@ -1,0 +1,5 @@
+<%# locals: (entry:, estimate:) %>
+
+<%= render DS::DetailRow.new(label: t(estimate.quantity.negative? ? ".quantity_sent" : ".quantity_received"), value: format_quantity(estimate.quantity.abs, exact: true), value_class: "privacy-sensitive") %>
+<%= render DS::DetailRow.new(label: t(estimate.kind == :transfer ? ".price_at_transfer" : ".price_at_receipt"), value: format_non_cash_value(estimate.unit_price), value_class: "privacy-sensitive") %>
+<%= render DS::DetailRow.new(label: t(".cash_movement"), value: format_money(entry.amount_money), value_class: "privacy-sensitive") %>

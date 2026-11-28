@@ -267,9 +267,13 @@
                   <%= icon "lock", size: "sm", class: "text-secondary" %>
                 <% end %>
               <% end %>
-              <%= content_tag :p,
-                  transaction.transfer? && view_ctx == "global" ? "+/- #{format_money(entry.amount_money.abs)}" : format_money(-entry.amount_money),
-                  class: ["privacy-sensitive shrink-0", "text-green-600": entry.amount.negative?] %>
+              <% if (estimate = entry.non_cash_value) %>
+                <p class="text-right"><%= render "entries/non_cash_value", estimate: estimate, compact: true %></p>
+              <% else %>
+                <%= content_tag :p,
+                    transaction.transfer? && view_ctx == "global" ? "+/- #{format_money(entry.amount_money.abs)}" : format_money(-entry.amount_money),
+                    class: ["privacy-sensitive shrink-0", "text-green-600": entry.amount.negative?] %>
+              <% end %>
             </div>
           </div>
         </div>

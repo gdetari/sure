@@ -1,0 +1,5 @@
+<%# locals: (estimate:, compact: false) %>
+
+<% value = estimate.value %>
+<span class="privacy-sensitive whitespace-nowrap"><%= format_non_cash_value(value) %><%= " #{value.currency.iso_code}" if value && !compact %></span>
+<span class="block text-xs font-normal text-secondary"><%= t(compact && estimate.kind == :reward ? ".short_reward" : ".#{estimate.kind}") %></span>
