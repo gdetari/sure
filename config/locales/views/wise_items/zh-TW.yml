@@ -126,7 +126,7 @@ zh-TW:
     select_accounts:
       title: 選擇 Wise 餘額
       description: 選擇您想連結到 %{product_name} 帳戶的 Wise 幣別餘額。
-      no_accounts_found: 所有 Wise 餘額都已連結到 Sure 帳戶。
+      no_accounts_found: 沒有與此帳戶類型相符的未連結 Wise 餘額。
       no_connection: 找不到 Wise 連線。請先在供應商設定中連接 Wise。
       link_account: 連結餘額
       cancel: 取消
@@ -143,7 +143,7 @@ zh-TW:
     link_existing_account:
       not_found: 找不到帳戶或 Wise 餘額。
       account_already_linked: 此帳戶已與供應商連結。
-      unsupported_account_type: Wise 餘額只能連結至現金/存款帳戶。
+      unsupported_account_type: 請選擇與此帳戶類型相符的 Wise 餘額。
       currency_mismatch: "此 Wise 餘額的幣別為 %{balance_currency}，但帳戶的幣別為 %{account_currency}。請選擇與帳戶幣別相同的餘額。"
       success: 已成功將 %{account_name} 與 Wise 連結
       failed: 無法連結帳戶。請再試一次。

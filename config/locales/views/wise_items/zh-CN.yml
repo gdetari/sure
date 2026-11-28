@@ -140,7 +140,7 @@ zh-CN:
     select_accounts:
       title: 选择 Wise 余额
       description: 选择您要关联至 %{product_name} 账户的 Wise 币种余额。
-      no_accounts_found: 所有 Wise 余额均已关联至 Sure 账户。
+      no_accounts_found: 没有与此账户类型匹配的未关联 Wise 余额。
       no_connection: 未找到 Wise 连接。请先在提供商设置中连接 Wise。
       link_account: 关联余额
       cancel: 取消
@@ -160,7 +160,7 @@ zh-CN:
       success: 已成功将 %{account_name} 与 Wise 关联
       failed: 关联账户失败。请重试。
       account_already_linked: 此账户已关联到其他提供商。
-      unsupported_account_type: Wise 余额只能关联到现金账户。
+      unsupported_account_type: 请选择与此账户类型匹配的 Wise 余额。
       currency_mismatch: 此 Wise 余额的币种为 %{balance_currency}，而该账户的币种为 %{account_currency}。请选择与账户币种一致的余额。
     complete_account_setup:
       not_found: 未找到 Wise 余额。

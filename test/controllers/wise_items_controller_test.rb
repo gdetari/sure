@@ -70,6 +70,39 @@ class WiseItemsControllerTest < ActionDispatch::IntegrationTest
     assert wise_account.reload.account.present?
   end
 
+  test "creating an invested jar uses its total worth and cash portion" do
+    jar = wise_accounts(:jar)
+    jar.upsert_wise_snapshot!({ "type" => "SAVINGS", "investmentState" => "INVESTING", "currency" => "EUR",
+                               "totalWorth" => { "value" => 500 }, "cashAmount" => { "value" => 20, "currency" => "EUR" } })
+
+    post complete_account_setup_wise_item_url(@wise_item), params: { wise_account_id: jar.id }
+
+    account = jar.reload.current_account
+    assert_predicate account, :investment?
+    assert_equal [ 500, 20 ], [ account.balance, account.cash_balance ]
+  end
+
+  test "Wise linking offers the matching type and refuses cross-type links" do
+    jar = wise_accounts(:jar)
+    jar.update!(raw_payload: { "type" => "SAVINGS", "investmentState" => "INVESTED" })
+    account = @family.accounts.create!(name: "Fund", balance: 0, currency: "EUR", accountable: Investment.new)
+    checking = wise_accounts(:checking)
+
+    { "Investment" => jar, "Depository" => checking }.each do |type, expected|
+      get select_accounts_wise_items_url(wise_item_id: @wise_item.id, accountable_type: type)
+      assert_equal [ expected.id ], css_select("input[name='wise_account_id']").map { |input| input["value"] }
+    end
+    get select_existing_account_wise_items_url(account_id: account.id, wise_item_id: @wise_item.id)
+    assert_equal [ jar.id ], css_select("input[name='wise_account_id']").map { |input| input["value"] }
+
+    assert_no_difference "AccountProvider.count" do
+      post link_existing_account_wise_items_url, params: { account_id: account.id, wise_account_id: checking.id }
+      post link_existing_account_wise_items_url, params: { account_id: manual_account(currency: "EUR").id, wise_account_id: jar.id }
+    end
+    post link_existing_account_wise_items_url, params: { account_id: account.id, wise_account_id: jar.id }
+    assert_equal jar, account.reload.provider_account_for("WiseAccount")
+  end
+
   test "link_existing_account links a cash account in the balance's currency and syncs the connection" do
     account = manual_account(currency: "EUR")
     wise_account = wise_accounts(:checking)

@@ -33,7 +33,7 @@ tr:
       failed: Hesap bağlanamadı. Lütfen tekrar deneyin.
       not_found: Hesap veya Wise bakiyesi bulunamadı.
       success: "%{account_name} Wise ile başarıyla bağlandı"
-      unsupported_account_type: Wise bakiyeleri yalnızca nakit hesaplarına bağlanabilir.
+      unsupported_account_type: Bu hesap türüne uygun bir Wise bakiyesi seçin.
     link_profiles:
       already_connected: Seçilen tüm profiller zaten bağlı.
       no_profiles_selected: Lütfen en az bir profil seçin.
@@ -95,7 +95,7 @@ tr:
       description: "%{product_name} hesabınıza bağlamak istediğiniz Wise para birimi
         bakiyesini seçin."
       link_account: Bakiyeyi bağla
-      no_accounts_found: Tüm Wise bakiyeleri zaten Sure hesaplarına bağlı.
+      no_accounts_found: Bu hesap türüne uygun, bağlantısız Wise bakiyesi bulunamadı.
       no_connection: Wise bağlantısı bulunamadı. Lütfen önce Sağlayıcı Ayarlarında
         Wise'ı bağlayın.
       title: Wise Bakiyesini Seç

@@ -140,7 +140,7 @@ en:
     select_accounts:
       title: Select Wise Balance
       description: Select the Wise currency balance you want to link to your %{product_name} account.
-      no_accounts_found: All Wise balances are already linked to Sure accounts.
+      no_accounts_found: No unlinked Wise balances match this account type.
       no_connection: No Wise connection found. Please connect Wise in Provider Settings first.
       link_account: Link balance
       cancel: Cancel
@@ -158,7 +158,7 @@ en:
     link_existing_account:
       not_found: Account or Wise balance not found.
       account_already_linked: This account is already linked to a provider.
-      unsupported_account_type: Wise balances can only be linked to cash accounts.
+      unsupported_account_type: Choose a Wise balance that matches this account’s type.
       currency_mismatch: "This Wise balance is in %{balance_currency}, but the account is in %{account_currency}. Choose a balance in the account's currency."
       success: "Successfully linked %{account_name} with Wise"
       failed: Failed to link account. Please try again.

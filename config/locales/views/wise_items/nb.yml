@@ -139,7 +139,7 @@ nb:
     select_accounts:
       title: Velg Wise-saldo
       description: Velg valutasaldoen i Wise du vil koble til %{product_name}-kontoen din.
-      no_accounts_found: Alle Wise-saldoer er allerede koblet til Sure-kontoer.
+      no_accounts_found: Ingen ukoblede Wise-saldoer passer til denne kontotypen.
       no_connection: Fant ingen Wise-tilkobling. Koble til Wise i leverandørinnstillingene først.
       link_account: Koble til saldo
       cancel: Avbryt
@@ -159,7 +159,7 @@ nb:
       success: '%{account_name} ble koblet til Wise'
       failed: Kunne ikke koble til kontoen. Prøv igjen.
       account_already_linked: "Denne kontoen er allerede koblet til en leverandør."
-      unsupported_account_type: "Wise-saldoer kan bare kobles til kontantkontoer."
+      unsupported_account_type: Velg en Wise-saldo som passer til kontotypen.
       currency_mismatch: "Denne Wise-saldoen er i %{balance_currency}, men kontoen er i %{account_currency}. Velg en saldo i kontoens valuta."
     complete_account_setup:
       not_found: Fant ikke Wise-saldoen.

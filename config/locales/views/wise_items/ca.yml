@@ -139,7 +139,7 @@ ca:
     select_accounts:
       title: Selecciona un saldo de Wise
       description: Selecciona el saldo en divisa de Wise que vols enllaçar al teu compte de %{product_name}.
-      no_accounts_found: Tots els saldos de Wise ja estan enllaçats amb comptes de Sure.
+      no_accounts_found: No hi ha cap saldo de Wise sense enllaçar que coincideixi amb aquest tipus de compte.
       no_connection: No s'ha trobat cap connexió Wise. Primer, connecta Wise a la configuració dels proveïdors.
       link_account: Enllaça el saldo
       cancel: Cancel·la
@@ -156,7 +156,7 @@ ca:
     link_existing_account:
       not_found: No s'ha trobat el compte o el saldo de Wise.
       account_already_linked: Aquest compte ja està enllaçat a un proveïdor.
-      unsupported_account_type: Els saldos de Wise només es poden enllaçar a comptes d'efectiu.
+      unsupported_account_type: Tria un saldo de Wise que coincideixi amb el tipus de compte.
       currency_mismatch: "Aquest saldo de Wise és en %{balance_currency}, però el compte és en %{account_currency}. Tria un saldo en la moneda del compte."
       success: S'ha enllaçat correctament %{account_name} amb Wise
       failed: No s'ha pogut enllaçar el compte. Torna-ho a provar.

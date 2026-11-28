@@ -39,8 +39,23 @@ class WiseAccount::Processor
   private
 
     def update_balance!(account)
-      balance = live_balance
-      account.update!(balance: balance, cash_balance: balance, currency: wise_account.currency)
+      Account.transaction do
+        previous = replace_jar_accountable(account)
+        cash = wise_account.cash_balance_for(account.accountable_type, fallback: previous ? 0 : account.cash_balance)
+        account.update!(balance: live_balance, cash_balance: cash, currency: wise_account.currency)
+        previous&.destroy!
+      end
+    end
+
+    def replace_jar_accountable(account)
+      return unless wise_account.jar? && (account.depository? || account.investment?)
+
+      type = wise_account.account_type(fallback: account.accountable_type)
+      return if account.accountable_type == type
+
+      previous = account.accountable
+      account.accountable = Accountable.from_type(type).new(subtype: wise_account.account_subtype)
+      previous
     end
 
     def live_balance

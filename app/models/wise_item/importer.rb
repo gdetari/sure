@@ -48,9 +48,6 @@ class WiseItem::Importer
   # on, so a jar renamed in Wise, a second jar in the currency or a jar
   # opened later moves nothing already routed (#routing_decision).
   ROUTING_DECISION_KEY = "wise_jar_balance_id"
-  # A balance in one of these states holds investments, which earn interest
-  # and fees like a jar.
-  INVESTED_STATES = %w[INVESTED INVESTING DIVESTING].freeze
 
   # Wise answered with a page this fetch had already read.
   PaginationError = Class.new(StandardError)
@@ -1696,7 +1693,7 @@ class WiseItem::Importer
         if decided && decided.currency == currency
           { balance: decided }
         else
-          holders = jars_in(currency, time) + standard_balances_in(currency, time, debit: debit).select { |wise_account| invested?(wise_account) }
+          holders = jars_in(currency, time) + standard_balances_in(currency, time, debit: debit).select(&:invested?)
           if holders.size > 1
             named = jars_named(WiseActivity::Processor.named_balance(activity), [ currency ], time) & holders
             named.one? ? { balance: named.first } : { state: :ambiguous }
@@ -1782,10 +1779,6 @@ class WiseItem::Importer
 
     def standard_balances_in(currency, time, debit: false)
       wise_item.wise_accounts.reject(&:jar?).select { |wise_account| wise_account.currency == currency && takes_row?(wise_account, debit: debit) { time } }
-    end
-
-    def invested?(wise_account)
-      INVESTED_STATES.include?(wise_account.raw_payload["investmentState"]) if wise_account.raw_payload.is_a?(Hash)
     end
 
     def jars

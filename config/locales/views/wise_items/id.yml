@@ -140,7 +140,7 @@ id:
     select_accounts:
       title: Pilih Saldo Wise
       description: Pilih saldo mata uang Wise yang ingin Anda tautkan ke akun %{product_name} Anda.
-      no_accounts_found: Semua saldo Wise sudah ditautkan ke rekening Sure.
+      no_accounts_found: Tidak ada saldo Wise yang belum ditautkan untuk jenis rekening ini.
       no_connection: Tidak ada koneksi Wise ditemukan. Silakan hubungkan Wise di Pengaturan Penyedia terlebih dahulu.
       link_account: Tautkan saldo
       cancel: Batal
@@ -158,7 +158,7 @@ id:
     link_existing_account:
       not_found: Rekening atau saldo Wise tidak ditemukan.
       account_already_linked: Rekening ini sudah ditautkan ke penyedia lain.
-      unsupported_account_type: Saldo Wise hanya dapat ditautkan ke rekening kas.
+      unsupported_account_type: Pilih saldo Wise yang sesuai dengan jenis rekening ini.
       currency_mismatch: "Saldo Wise ini dalam mata uang %{balance_currency}, tetapi rekening dalam mata uang %{account_currency}. Pilih saldo dengan mata uang rekening."
       success: "Berhasil menautkan %{account_name} dengan Wise"
       failed: Gagal menautkan rekening. Silakan coba lagi.

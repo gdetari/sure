@@ -136,7 +136,7 @@ nl:
     select_accounts:
       title: "Wise-saldo selecteren"
       description: "Selecteer het Wise-valutasaldo dat u wilt koppelen aan uw %{product_name}-account."
-      no_accounts_found: "Alle Wise-saldi zijn al aan Sure-accounts gekoppeld."
+      no_accounts_found: Er zijn geen ongekoppelde Wise-saldi voor dit rekeningtype.
       no_connection: "Geen Wise-koppeling gevonden. Koppel eerst Wise in de providerinstellingen."
       link_account: "Saldo koppelen"
       cancel: "Annuleren"

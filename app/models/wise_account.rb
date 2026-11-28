@@ -3,6 +3,8 @@
 class WiseAccount < ApplicationRecord
   include Encryptable
 
+  INVESTED_STATES = %w[INVESTED INVESTING DIVESTING].freeze
+
   # Kept from the stored snapshot when a new one lacks them: the recipient
   # ids that decide transfer direction (a failed lookup must not flip it)
   # and Sure's own markers on the balance.
@@ -172,8 +174,32 @@ class WiseAccount < ApplicationRecord
     @processing_lock_session.present? && backend_pid(self.class.lease_connection) != @processing_lock_session
   end
 
+  def invested?
+    raw_payload.is_a?(Hash) && INVESTED_STATES.include?(raw_payload["investmentState"])
+  end
+
+  # A partial snapshot cannot tell us that a previously invested jar was cashed out.
+  def account_type(fallback: "Depository")
+    return "Depository" unless jar?
+    return "Investment" if invested?
+    return "Depository" if raw_payload["investmentState"] == "NOT_INVESTED"
+
+    fallback
+  end
+
   def account_subtype
+    return "other" if jar? && invested?
+
     jar? ? "savings" : Depository::DEFAULT_SUBTYPE
+  end
+
+  def cash_balance_for(type, fallback: 0)
+    return current_balance || 0 unless type == "Investment"
+
+    cash = raw_payload&.dig("cashAmount")
+    return fallback unless cash && cash["value"].present? && (cash["currency"].blank? || cash["currency"] == currency)
+
+    cash["value"].to_d
   end
 
   def upsert_wise_snapshot!(balance_data, borderless_account_id: nil, recipient_id: nil)

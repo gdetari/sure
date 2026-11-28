@@ -155,7 +155,7 @@ uk:
     select_accounts:
       title: Виберіть баланс Wise
       description: Виберіть валютний баланс Wise, який ви хочете пов'язати зі своїм рахунком %{product_name}.
-      no_accounts_found: Усі баланси Wise вже пов'язано з рахунками Sure.
+      no_accounts_found: Немає неприв’язаних балансів Wise для цього типу рахунку.
       no_connection: З'єднання Wise не знайдено. Спочатку підключіть Wise у налаштуваннях постачальника.
       link_account: Пов'язати баланс
       cancel: Скасувати
@@ -172,7 +172,7 @@ uk:
     link_existing_account:
       not_found: Рахунок або баланс Wise не знайдено.
       account_already_linked: Цей рахунок уже пов'язано з постачальником.
-      unsupported_account_type: Баланси Wise можна пов'язати лише з грошовими рахунками.
+      unsupported_account_type: Виберіть баланс Wise, що відповідає типу рахунку.
       currency_mismatch: "Цей баланс Wise у %{balance_currency}, а рахунок — у %{account_currency}. Виберіть баланс у валюті рахунку."
       success: "Успішно пов'язано %{account_name} з Wise"
       failed: Не вдалося пов'язати рахунок. Спробуйте ще раз.

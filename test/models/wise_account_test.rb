@@ -36,6 +36,14 @@ class WiseAccountTest < ActiveSupport::TestCase
     assert_equal "savings", @jar.account_subtype
   end
 
+  test "ordinary jars and standard balances keep their cash account types" do
+    @jar.update!(raw_payload: { "type" => "SAVINGS", "investmentState" => "NOT_INVESTED" })
+    @checking.update!(raw_payload: { "type" => "STANDARD", "investmentState" => "INVESTED" })
+
+    assert_equal [ "Depository", "savings" ], [ @jar.account_type, @jar.account_subtype ]
+    assert_equal [ "Depository", "checking" ], [ @checking.account_type, @checking.account_subtype ]
+  end
+
   # upsert_wise_snapshot!
 
   # Card holds sit in reservedAmount and Sure books a card payment only once

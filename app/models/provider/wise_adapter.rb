@@ -7,7 +7,7 @@ class Provider::WiseAdapter < Provider::Base
   Provider::Factory.register("WiseAccount", self)
 
   def self.supported_account_types
-    %w[Depository]
+    %w[Depository Investment]
   end
 
   def self.connection_configs(family:)

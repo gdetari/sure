@@ -139,7 +139,7 @@ pt-BR:
     select_accounts:
       title: Selecionar saldo do Wise
       description: Selecione o saldo em moeda do Wise que deseja vincular à sua conta do %{product_name}.
-      no_accounts_found: Todos os saldos do Wise já estão vinculados a contas do Sure.
+      no_accounts_found: Nenhum saldo Wise não vinculado corresponde a este tipo de conta.
       no_connection: Nenhuma conexão Wise encontrada. Conecte o Wise nas configurações de provedores primeiro.
       link_account: Vincular saldo
       cancel: Cancelar
@@ -157,7 +157,7 @@ pt-BR:
     link_existing_account:
       not_found: Conta ou saldo do Wise não encontrado.
       account_already_linked: Esta conta já está vinculada a um provedor.
-      unsupported_account_type: Saldos Wise só podem ser vinculados a contas de dinheiro.
+      unsupported_account_type: Escolha um saldo Wise compatível com o tipo de conta.
       currency_mismatch: Este saldo Wise está em %{balance_currency}, mas a conta está em %{account_currency}. Escolha um saldo na moeda da conta.
       success: "%{account_name} vinculada ao Wise com sucesso"
       failed: Falha ao vincular a conta. Tente novamente.

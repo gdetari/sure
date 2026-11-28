@@ -38,7 +38,7 @@ fr:
       failed: Échec de la liaison du compte. Veuillez réessayer.
       not_found: Compte ou solde Wise introuvable.
       success: "Liaison de %{account_name} à Wise réussie"
-      unsupported_account_type: Les soldes Wise ne peuvent être liés qu'à des comptes de liquidités.
+      unsupported_account_type: Choisissez un solde Wise correspondant au type de compte.
     link_profiles:
       already_connected: Tous les profils sélectionnés sont déjà connectés.
       no_profiles_selected: Veuillez sélectionner au moins un profil.
@@ -102,7 +102,7 @@ fr:
       description: Sélectionnez le solde en devise Wise que vous souhaitez lier à
         votre compte %{product_name}.
       link_account: Lier le solde
-      no_accounts_found: Tous les soldes Wise sont déjà liés à des comptes Sure.
+      no_accounts_found: Aucun solde Wise non lié ne correspond à ce type de compte.
       no_connection: Aucune connexion Wise trouvée. Veuillez d'abord connecter Wise
         dans les paramètres du fournisseur.
       title: Sélectionner un solde Wise

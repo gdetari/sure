@@ -453,9 +453,9 @@ class Account < ApplicationRecord
           family: family,
           name: wise_account.name || "Wise #{wise_account.currency}",
           balance: wise_account.current_balance || 0,
-          cash_balance: wise_account.current_balance || 0,
+          cash_balance: wise_account.cash_balance_for(wise_account.account_type),
           currency: wise_account.currency,
-          accountable_type: "Depository",
+          accountable_type: wise_account.account_type,
           accountable_attributes: { subtype: wise_account.account_subtype }
         },
         skip_initial_sync: true

@@ -8,6 +8,50 @@ class WiseAccount::ProcessorTest < ActiveSupport::TestCase
                                                      raw_payload: { "type" => "STANDARD", "recipient_id" => 99999001 })
   end
 
+  test "an invested jar moves its existing account and history into Investments on sync" do
+    account = link(@wise_account)
+    entry = account.entries.create!(date: 2.days.ago.to_date, amount: -100, currency: "EUR",
+                                    name: "Jar deposit", entryable: Transaction.new)
+    old_depository = account.accountable
+    snapshot = { "type" => "SAVINGS", "investmentState" => "INVESTED", "currency" => "EUR",
+                 "totalWorth" => { "value" => 125 }, "cashAmount" => { "value" => 5, "currency" => "EUR" } }
+    @wise_account.upsert_wise_snapshot!(snapshot)
+
+    WiseAccount::Processor.new(@wise_account).process
+    account.reload
+    assert_predicate account, :investment?
+    assert_equal [ 125, 5 ], [ account.balance, account.cash_balance ]
+    assert_equal entry.id, account.entries.sole.id
+    assert_equal account.id, @wise_account.reload.current_account.id
+    assert_not Depository.exists?(old_depository.id)
+
+    Balance::Materializer.new(account, strategy: :reverse).materialize_balances
+    today = account.balances.find_by!(date: Date.current)
+    assert_equal [ 125, 5, 120 ], [ today.end_balance, today.end_cash_balance, today.end_non_cash_balance ]
+    assert_equal 0, today.net_market_flows
+    assert_equal 125, account.balances.find_by!(date: Date.yesterday).end_balance
+
+    investment = account.accountable
+    investment.update!(subtype: "mutual_fund")
+    [ "INVESTING", "DIVESTING", "UNKNOWN", nil ].each do |state|
+      @wise_account.upsert_wise_snapshot!(snapshot.merge("investmentState" => state))
+      WiseAccount::Processor.new(@wise_account).process
+      assert_equal investment, account.reload.accountable
+      assert_equal "mutual_fund", account.subtype
+    end
+
+    @wise_account.upsert_wise_snapshot!(snapshot.except("cashAmount", "investmentState"))
+    WiseAccount::Processor.new(@wise_account).process
+    assert_equal 5, account.reload.cash_balance
+
+    @wise_account.upsert_wise_snapshot!(snapshot.merge("investmentState" => "NOT_INVESTED"))
+    WiseAccount::Processor.new(@wise_account).process
+    assert_predicate account.reload, :depository?
+    assert_equal "savings", account.subtype
+    assert_equal [ 125, 125 ], [ account.balance, account.cash_balance ]
+    assert_not Investment.exists?(investment.id)
+  end
+
   # Current balance: an anchor left by another provider follows the Wise
   # balance in place, so a card payment Wise completes after a sync, dated on
   # that day, does not shift the days before it.

@@ -71,6 +71,21 @@ class Balance::Materializer
 
     def calculate_balances
       @balances = calculator.calculate
+      if strategy == :reverse && account.investment? && account.linked_to?("WiseAccount")
+        apply_wise_jar_cash_balance(@balances.first)
+      end
+    end
+
+    # Wise reports the jar's live cash and total worth, without security positions.
+    # Reallocate the closing balance on the snapshot day. Earlier totals and market
+    # gains are derived from the ledger and must not move with today's cash split.
+    def apply_wise_jar_cash_balance(closing)
+      return unless closing && closing.balance == account.balance && account.cash_balance
+
+      delta = account.cash_balance - closing.cash_balance
+      closing.cash_balance = account.cash_balance
+      closing.cash_adjustments += delta
+      closing.non_cash_adjustments -= delta
     end
 
     def persist_balances

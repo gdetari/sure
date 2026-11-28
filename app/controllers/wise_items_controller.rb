@@ -183,7 +183,7 @@ class WiseItemsController < ApplicationController
       frame_redirect_to settings_providers_path, alert: t("wise_items.select_accounts.no_connection") and return
     end
 
-    @available_accounts = @wise_item.wise_accounts.unlinked
+    @available_accounts = @wise_item.wise_accounts.unlinked.select { |balance| balance.account_type == @accountable_type }
 
     render layout: false
   end
@@ -214,9 +214,8 @@ class WiseItemsController < ApplicationController
       redirect_to accounts_path, alert: t("wise_items.select_existing_account.not_found") and return
     end
 
-    # Only a balance in the account's currency can be linked to it
-    # (#existing_account_link_refusal).
     @available_accounts = @wise_item.wise_accounts.unlinked.where(currency: @account.currency)
+                                    .select { |balance| balance.account_type == @account.accountable_type }
 
     render layout: false
   end
@@ -277,13 +276,10 @@ class WiseItemsController < ApplicationController
                  .find_by(id: wise_account_id)
     end
 
-    # A Wise balance is cash in one currency, and every sync writes its balance
-    # and currency onto the linked account, so only an unlinked cash account in
-    # that currency can take it.
     def existing_account_link_refusal(account, wise_account)
       if account.linked?
         t("wise_items.link_existing_account.account_already_linked")
-      elsif Provider::WiseAdapter.supported_account_types.exclude?(account.accountable_type)
+      elsif wise_account.account_type != account.accountable_type
         t("wise_items.link_existing_account.unsupported_account_type")
       elsif account.currency != wise_account.currency
         t("wise_items.link_existing_account.currency_mismatch",
