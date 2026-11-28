@@ -13,6 +13,19 @@ class OnchainWalletAccount::Processor
 
   attr_reader :onchain_wallet_account
 
+  def self.non_cash_value(record)
+    case record
+    when Trade
+      return unless record.investment_activity_label == TRANSFER_LABEL
+
+      Entry::NonCashValue.build(:transfer, record.qty, unit_price: record.price_money)
+    when Transaction
+      # A transfer awaiting its dated quote carries the signed quantity in the raw movement.
+      movement = record.extra[SOURCE] if record.extra.is_a?(Hash)
+      Entry::NonCashValue.build(:transfer, movement["amount"]) if movement.is_a?(Hash)
+    end
+  end
+
   def initialize(onchain_wallet_account)
     @onchain_wallet_account = onchain_wallet_account
   end

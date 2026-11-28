@@ -71,18 +71,18 @@ class NonCashRewardDisplayTest < ActionDispatch::IntegrationTest
     assert_select "dt", text: "Unrealized gain/loss"
   end
 
-  test "another provider can use both reward views with its own metadata" do
+  test "Coinbase transfers and staking income keep their original list and drawer amounts" do
     entry = entries(:trade)
-    entry.update!(source: "example", amount: 0)
-    entry.trade.update!(qty: 0.125, price: 200, extra: { "example" => { "activity" => "bonus" } })
+    [ [ "Transfer", 0, "$0.00" ], [ "Dividend", -25, "$25.00" ] ].each do |label, cash, expected|
+      entry.update!(source: "coinbase", amount: cash)
+      entry.trade.update!(investment_activity_label: label, qty: 0.125, price: 200)
 
-    provider = stub("reward provider")
-    provider.stubs(:reward_price_status).with({ "activity" => "bonus" }).returns(:historical)
-    stub_const(Trade, :REWARD_PROVIDERS, { "example" => provider }) do
       get account_url(entry.account, tab: "activity")
       assert_response :success
-      assert_reward_row entry, "$25.00"
-      assert_reward_header entry, "$25.00 USD"
+      assert_select "##{dom_id(entry.trade)} p.privacy-sensitive", text: expected
+      get trade_url(entry)
+      assert_response :success
+      assert_select "header h3 .privacy-sensitive", text: expected
     end
   end
 

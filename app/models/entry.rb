@@ -24,12 +24,6 @@ class Entry < ApplicationRecord
 
   monetize :amount
 
-  NonCashValue = Data.define(:kind, :quantity, :unit_price) do
-    def value
-      unit_price * quantity.abs if unit_price
-    end
-  end
-
   # A blank form value casts to nil, which the NOT NULL column refuses.
   normalizes :excluded, with: ->(excluded) { excluded || false }, apply_to_nil: true
 
@@ -564,17 +558,7 @@ class Entry < ApplicationRecord
   end
 
   def non_cash_value
-    return unless amount&.zero?
-    return trade&.non_cash_reward unless source == OnchainWalletAccount::Processor::SOURCE
-
-    if trade? && trade.investment_activity_label == Trade::TRANSFER_LABEL && trade.qty&.nonzero?
-      unit_price = trade.price_money if trade.price&.positive?
-      NonCashValue.new(:transfer, trade.qty, unit_price)
-    elsif transaction? && (movement = transaction.extra&.[](source)).is_a?(Hash)
-      # Without a dated quote the wallet importer stores the movement as a transaction.
-      quantity = BigDecimal(movement["amount"].to_s, exception: false)
-      NonCashValue.new(:transfer, quantity, nil) if quantity&.finite? && !quantity.zero?
-    end
+    NonCashValue.for(self)
   end
 
   def linked?

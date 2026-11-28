@@ -5,6 +5,7 @@ class Provider::KrakenAdapter < Provider::Base
   include Provider::InstitutionMetadata
 
   Provider::Factory.register("KrakenAccount", self)
+  self.non_cash_value_sources = { "kraken" => KrakenAccount::LedgerProcessor }.freeze
 
   def self.supported_account_types
     %w[Crypto]

@@ -18,6 +18,9 @@
 #     end
 #   end
 class Provider::Base
+  # Keyed by the source persisted on the entry so an unlinked account's history still works.
+  class_attribute :non_cash_value_sources, default: {}.freeze, instance_accessor: false
+
   attr_reader :provider_account, :account
 
   def initialize(provider_account, account: nil)
