@@ -19,6 +19,7 @@ en:
       not_self_hosted: Market data providers are configured by the instance operator on this deployment.
       success: Crypto prices are enabled. Wallet values appear after the next sync.
     errors:
+      alchemy_access: Ask your Sure administrator to check ALCHEMY_API_KEY and the networks enabled for the Alchemy app.
       address_required: Enter a wallet address.
       already_linked: That address is already being tracked on this network. Use Review tokens to change which assets are tracked.
       chain_unreachable: The public explorer for this network could not be reached. Try again in a moment.

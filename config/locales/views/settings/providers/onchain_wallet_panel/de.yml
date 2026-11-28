@@ -5,6 +5,7 @@ de:
       taglines:
         onchain_wallet: Verfolgt selbstverwahrte Bitcoin-, EVM-, Solana-, Cosmos- und Polkadot-Wallets über ihre öffentlichen Adressen.
       onchain_wallet_panel:
+        alchemy_hint: Diese Installation liest Guthaben und Transfers von EVM-Wallets über Alchemy.
         add_wallet: Wallet hinzufügen
         advanced: Erweitert
         disconnect_all: Alle Wallets trennen

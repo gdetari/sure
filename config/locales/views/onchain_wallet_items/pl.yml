@@ -24,6 +24,7 @@ pl:
       success: Ceny kryptowalut są włączone. Wartości portfela pojawią się po następnej
         synchronizacji.
     errors:
+      alchemy_access: Poproś administratora Sure o sprawdzenie ALCHEMY_API_KEY i sieci włączonych w aplikacji Alchemy.
       address_required: Wpisz adres portfela.
       already_linked: Ten adres jest już śledzony w tej sieci. Użyj opcji Przejrzyj
         tokeny, aby zmienić śledzone aktywa.

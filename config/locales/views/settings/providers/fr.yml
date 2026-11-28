@@ -246,6 +246,7 @@ fr:
       not_authorized: Non autorisé
       not_found: Fournisseur non trouvé.
       onchain_wallet_panel:
+        alchemy_hint: Cette installation utilise Alchemy pour lire les soldes et les transferts des portefeuilles EVM.
         add_wallet: Ajouter un portefeuille
         advanced: Avancé
         disconnect_all: Déconnecter tous les portefeuilles

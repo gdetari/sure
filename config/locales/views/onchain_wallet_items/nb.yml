@@ -19,6 +19,7 @@ nb:
       not_self_hosted: Leverandører av markedsdata konfigureres av den som drifter denne instansen.
       success: Kryptopriser er aktivert. Lommebokverdiene vises etter neste synkronisering.
     errors:
+      alchemy_access: Be Sure-administratoren kontrollere ALCHEMY_API_KEY og nettverkene som er aktivert i Alchemy-appen.
       address_required: Skriv inn en lommebokadresse.
       already_linked: Denne adressen følges allerede på dette nettverket. Bruk «Gjennomgå tokens» for å endre hvilke eiendeler som følges.
       chain_unreachable: Fikk ikke kontakt med den offentlige blokkutforskeren for dette nettverket. Prøv igjen om et øyeblikk.

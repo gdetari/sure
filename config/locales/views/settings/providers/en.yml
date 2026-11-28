@@ -192,6 +192,7 @@ en:
         disconnect: Disconnect
         disconnect_confirm: "Are you sure you want to disconnect %{name}?"
       onchain_wallet_panel:
+        alchemy_hint: This installation uses Alchemy to read EVM wallet balances and transfers.
         add_wallet: Add wallet
         advanced: Advanced
         disconnect_all: Disconnect all wallets

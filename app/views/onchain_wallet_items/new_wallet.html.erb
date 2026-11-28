@@ -11,8 +11,8 @@
           stops being read at all. %>
       <%= render DS::Alert.new(
             variant: :info,
-            title: t("settings.providers.onchain_wallet_panel.keyless_title"),
-            message: t("settings.providers.onchain_wallet_panel.keyless_body")
+            title: Onchain::Chains.alchemy? ? "Alchemy" : t("settings.providers.onchain_wallet_panel.keyless_title"),
+            message: Onchain::Chains.alchemy? ? t("settings.providers.onchain_wallet_panel.alchemy_hint") : t("settings.providers.onchain_wallet_panel.keyless_body")
           ) %>
 
       <% if @error_message.present? %>

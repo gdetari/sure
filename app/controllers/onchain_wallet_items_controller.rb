@@ -242,6 +242,9 @@ class OnchainWalletItemsController < ApplicationController
     rescue Onchain::Chains::RateLimitedError
       @provider_error = t("onchain_wallet_items.errors.rate_limited")
       nil
+    rescue Onchain::AlchemyAdapter::AccessError
+      @provider_error = t("onchain_wallet_items.errors.alchemy_access")
+      nil
     rescue Onchain::Chains::UnreachableError
       @provider_error = t("onchain_wallet_items.errors.chain_unreachable")
       nil

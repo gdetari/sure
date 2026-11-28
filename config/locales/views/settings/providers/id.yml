@@ -192,6 +192,7 @@ id:
         disconnect: Putuskan koneksi
         disconnect_confirm: "Yakin ingin memutuskan koneksi %{name}?"
       onchain_wallet_panel:
+        alchemy_hint: Instalasi ini menggunakan Alchemy untuk membaca saldo dan transfer dompet EVM.
         add_wallet: Tambah dompet
         advanced: Lanjutan
         disconnect_all: Putuskan semua dompet

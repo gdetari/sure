@@ -58,6 +58,23 @@ class OnchainWalletItemsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match I18n.t("onchain_wallet_items.price_provider_warning.title"), response.body
   end
 
+  test "Alchemy installations show the configured provider and keep the sync date editable" do
+    with_env_overrides(ONCHAIN_EVM_PROVIDER: "alchemy", ALCHEMY_API_KEY: nil) do
+      create_onchain_wallet_item(family: @family)
+      get connect_form_settings_providers_path(provider_key: "onchain_wallet")
+      assert_response :success
+      assert_select "input[type=password]", count: 0
+      assert_select "input[type=date]"
+      assert_match I18n.t("settings.providers.onchain_wallet_panel.alchemy_hint"), response.body
+
+      get new_wallet_onchain_wallet_items_url
+      assert_match I18n.t("settings.providers.onchain_wallet_panel.alchemy_hint"), response.body
+      post preview_wallet_onchain_wallet_items_url, params: { address: "0x#{'1' * 40}", chain: "base" }
+      assert_response :unprocessable_entity
+      assert_match I18n.t("onchain_wallet_items.errors.alchemy_access"), response.body
+    end
+  end
+
   test "a non-USD family is warned that nothing can convert USD prices" do
     Setting.stubs(:enabled_securities_providers).returns([ Onchain::SecurityResolver::PRICE_PROVIDER ])
     ExchangeRate.stubs(:provider).returns(nil)

@@ -78,6 +78,8 @@ x-rails-env: &rails_env
   # Optional privacy policy and terms URLs for the footer links; see docs/hosting/docker.md
   LEGAL_PRIVACY_URL: ${LEGAL_PRIVACY_URL:-}
   LEGAL_TERMS_URL: ${LEGAL_TERMS_URL:-}
+  ONCHAIN_EVM_PROVIDER: ${ONCHAIN_EVM_PROVIDER:-blockscout}
+  ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
   # NOTE: enabling OpenAI will incur costs when you use AI-related features in the app (chat, rules).  Make sure you have set appropriate spend limits on your account before adding this.
   OPENAI_ACCESS_TOKEN: ${OPENAI_ACCESS_TOKEN}
   OPENAI_MODEL: ${OPENAI_MODEL:-}

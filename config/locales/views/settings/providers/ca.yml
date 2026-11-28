@@ -333,6 +333,7 @@ ca:
         disconnect: Desconnecta
         disconnect_confirm: Segur que vols desconnectar %{name}?
       onchain_wallet_panel:
+        alchemy_hint: Aquesta instal·lació utilitza Alchemy per llegir els saldos i les transferències de les carteres EVM.
         add_wallet: Afegeix una cartera
         advanced: Avançat
         disconnect_all: Desconnecta totes les carteres
