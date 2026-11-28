@@ -22,6 +22,8 @@ nb:
       address_required: Skriv inn en lommebokadresse.
       already_linked: Denne adressen følges allerede på dette nettverket. Bruk «Gjennomgå tokens» for å endre hvilke eiendeler som følges.
       chain_unreachable: Fikk ikke kontakt med den offentlige blokkutforskeren for dette nettverket. Prøv igjen om et øyeblikk.
+      explorer_key_missing: Be Sure-administratoren din om å sette BLOCKSCOUT_API_KEY for å synkronisere EVM-lommebøker.
+      explorer_rejected: Blockscout avviste forespørselen om å lese lommeboken. Be Sure-administratoren din sjekke API-nøkkelen og tilgangen den gir.
       rate_limited: Den offentlige blokkutforskeren begrenser antall forespørsler akkurat nå. Prøv igjen om noen minutter.
       unexpected: Noe gikk galt under lesing av denne lommeboken. Detaljene er registrert for kundestøtte.
       unrecognized_address: Dette ser ikke ut som en adresse på noe støttet nettverk.

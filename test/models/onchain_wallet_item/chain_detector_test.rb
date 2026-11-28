@@ -14,6 +14,8 @@ class OnchainWalletItem::ChainDetectorTest < ActiveSupport::TestCase
   Probe = Struct.new(:answer, :delay) do
     def has_activity?(_address)
       sleep(delay) if delay
+      raise answer if answer.is_a?(StandardError)
+
       answer
     end
   end
@@ -42,6 +44,13 @@ class OnchainWalletItem::ChainDetectorTest < ActiveSupport::TestCase
     # address is absent there, and settling on alpha would link the wrong
     # network with no way back.
     assert_not result.resolved?
+    assert result.ambiguous?
+    assert_equal [ "alpha" ], result.detected_keys
+  end
+
+  test "denied access to one candidate still allows the user to choose another network" do
+    result = detect("alpha" => true, "beta" => Onchain::Chains::AccessDeniedError.new)
+
     assert result.ambiguous?
     assert_equal [ "alpha" ], result.detected_keys
   end

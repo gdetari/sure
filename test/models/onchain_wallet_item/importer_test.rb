@@ -35,6 +35,37 @@ class OnchainWalletItem::ImporterTest < ActiveSupport::TestCase
     assert account.content_hash.present?
   end
 
+  test "syncs existing Base balances and paginated transfer history with the shared Blockscout key" do
+    address = "0x" + "1" * 40
+    contract = "0x" + "2" * 40
+    native = create_onchain_wallet_account(item: @item, chain: "base", address: address)
+    token = create_onchain_wallet_account(item: @item, chain: "base", address: address, asset: fake_token_asset(contract: contract))
+    url = "https://api.blockscout.com/8453/api/v2/addresses/#{address}"
+    auth = { "Authorization" => "Bearer test-blockscout-key" }
+    json = { "Content-Type" => "application/json" }
+    token_info = { address_hash: contract, type: "ERC-20", decimals: "6", symbol: "USDC", name: "USD Coin" }
+    transfer = { transaction_hash: "0xtx", log_index: 10, token: token_info, total: { value: "1000000" },
+                 from: { hash: contract }, to: { hash: address }, timestamp: "2026-01-02T00:00:00Z" }
+
+    stub_request(:get, url).with(headers: auth).to_return(headers: json, body: { coin_balance: "2000000000000000000" }.to_json)
+    stub_request(:get, "#{url}/token-balances").with(headers: auth).to_return(headers: json, body: [ { token: token_info, value: "3500000" } ].to_json)
+    stub_request(:get, "#{url}/transactions").with(headers: auth).to_return(headers: json, body: { items: [] }.to_json)
+    stub_request(:get, "#{url}/token-transfers").with(headers: auth, query: { type: "ERC-20" })
+      .to_return(headers: json, body: { items: [ transfer ], next_page_params: { index: 10 } }.to_json)
+    stub_request(:get, "#{url}/token-transfers").with(headers: auth, query: { type: "ERC-20", index: "10" })
+      .to_return(headers: json, body: { items: [ transfer.merge(log_index: 9) ] }.to_json)
+
+    with_env_overrides(BLOCKSCOUT_API_KEY: "test-blockscout-key") do
+      result = @item.import_latest_onchain_data
+
+      assert_equal 1, result[:wallets_imported]
+      assert_equal 2, native.reload.quantity
+      assert_equal BigDecimal("3.5"), token.reload.quantity
+      assert_equal [ "0xtx_10", "0xtx_9" ], token.raw_movements_payload.fetch("movements").pluck("external_id")
+      assert_not token.history_truncated?
+    end
+  end
+
   test "does not create rows for assets the user never chose to track" do
     create_onchain_wallet_account(item: @item)
     stub_fake_snapshot(

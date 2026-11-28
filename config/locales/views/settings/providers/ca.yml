@@ -339,11 +339,11 @@ ca:
         disconnect_all_confirm: Això elimina totes les adreces seguides i els seus comptes. Vols continuar?
         etherscan_api_key_label: Clau API d'Etherscan (opcional)
         etherscan_api_key_placeholder: Enganxa una clau API d'Etherscan
-        etherscan_hint: Les lectures d'Ethereum funcionen sense clau. Afegir una clau d'Etherscan només augmenta el límit de sol·licituds per a Ethereum.
+        etherscan_hint: Amb una clau d’Etherscan, l’historial de transferències d’Ethereum es llegeix des d’Etherscan. Blockscout proporciona els saldos EVM.
         keep_etherscan_api_key: Deixa-ho en blanc per mantenir la clau existent
         manage_wallets: Gestiona les carteres
-        keyless_body: Sure només llegeix dades públiques de la cadena de blocs. No intervenen claus, frases de recuperació ni signatures, i no es pot gastar res.
-        keyless_title: Només lectura, sense claus
+        keyless_body: Sure llegeix les adreces públiques de les carteres i no pot gastar fons. Les xarxes EVM utilitzen la clau API de Blockscout del servidor.
+        keyless_title: Accés de només lectura a la cartera
         save: Desa
         sync_start_date_hint: Les transferències anteriors a aquesta data s'ignoren. Deixa-ho en blanc per importar tot el que mostri l'explorador.
         sync_start_date_label: Ignora les transferències anteriors al

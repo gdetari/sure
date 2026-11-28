@@ -38,12 +38,15 @@ module Onchain::ChainAdapter
     yield
   rescue Onchain::Chains::Error
     raise
-  rescue StandardError => e
-    rate_limit_classes, base_classes = provider_error_classes
-    raise Onchain::Chains::RateLimitedError, e.message if Array(rate_limit_classes).any? { |klass| e.is_a?(klass) }
-    raise Onchain::Chains::UnreachableError, e.message if Array(base_classes).any? { |klass| e.is_a?(klass) }
+  rescue *provider_error_classes.flatten => error
+    raise chain_error_for(error), error.message
+  end
 
-    raise
+  def chain_error_for(error)
+    rate_limits = Array(provider_error_classes.first)
+    return Onchain::Chains::RateLimitedError if rate_limits.any? { |type| error.is_a?(type) }
+
+    Onchain::Chains::UnreachableError
   end
 
   # Reads transfer history without letting its failure cost the balances.
@@ -61,12 +64,7 @@ module Onchain::ChainAdapter
     yield
   rescue Onchain::Chains::Error
     raise
-  rescue StandardError => e
-    rate_limit_classes, base_classes = provider_error_classes
-    known = Array(rate_limit_classes).any? { |klass| e.is_a?(klass) } ||
-      Array(base_classes).any? { |klass| e.is_a?(klass) }
-    raise unless known
-
+  rescue *provider_error_classes.flatten => e
     Rails.logger.warn("#{self.class.name} - history unavailable, keeping balances only: #{e.class}")
     nil
   end
@@ -80,6 +78,8 @@ module Onchain::ChainAdapter
   # that timed out or refused has not reported an empty address. An override
   # that collapses the third into false lets detection settle on another chain
   # without asking, which is how a wallet gets linked to the wrong network.
+  # An adapter may raise AccessDeniedError so detection can report a credential
+  # failure shared by every candidate.
   def has_activity?(address)
     valid_address?(address)
   end

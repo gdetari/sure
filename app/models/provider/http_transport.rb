@@ -38,4 +38,18 @@ module Provider::HttpTransport
     rescue *TRANSPORT_ERRORS => e
       raise self.class::ApiError, "#{self.class.name.demodulize} is unavailable (#{e.class})"
     end
+
+    def request_with_rate_limit_retries(max_retries, source: self.class.name, &request)
+      retries = 0
+      begin
+        translate_transport_errors(&request)
+      rescue self.class::RateLimitError
+        raise if retries >= max_retries
+
+        retries += 1
+        Rails.logger.warn("#{source} - rate limited (retry #{retries}/#{max_retries})")
+        sleep(0.5 * 2**(retries - 1))
+        retry
+      end
+    end
 end

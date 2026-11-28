@@ -43,14 +43,19 @@ class OnchainWalletItem::ChainDetector
     return Result.new(chain: definitions.first.key, candidates: definitions, detected_keys: []) if candidates.one?
 
     answers = probe(candidates)
+    # A single bad key can deny every candidate on a multichain API. Asking
+    # the user to pick a network would send the same request again.
+    raise answers.values.first if answers.values.all?(Onchain::Chains::AccessDeniedError)
+
     detected = definitions.select { |definition| answers[definition.key] == true }
+    all_answered = answers.values.all? { |answer| answer == true || answer == false }
 
     Result.new(
       # One chain answering yes settles it only when every other chain actually
       # answered. If one could not tell, the address may well belong there too,
       # and taking the single yes would link the wrong network for good — so the
       # user is asked, which is the screen an ambiguous answer already produces.
-      chain: (detected.one? && answers.values.none?(&:nil?)) ? detected.first.key : nil,
+      chain: (detected.one? && all_answered) ? detected.first.key : nil,
       candidates: definitions,
       detected_keys: detected.map(&:key)
     )
@@ -70,6 +75,8 @@ class OnchainWalletItem::ChainDetector
       threads = candidates.map do |definition, adapter|
         thread = Thread.new do
           Rails.application.executor.wrap { adapter.has_activity?(address) }
+        rescue Onchain::Chains::AccessDeniedError => e
+          e
         rescue StandardError => e
           Rails.logger.warn("OnchainWalletItem::ChainDetector - probe failed for #{definition.key}: #{e.class}")
           nil

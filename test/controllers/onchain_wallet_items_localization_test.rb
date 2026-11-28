@@ -114,7 +114,7 @@ class OnchainWalletItemsLocalizationTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match "Selbstverwahrte Wallet hinzufügen", response.body
-    assert_match "Nur Lesezugriff, keine Schlüssel erforderlich", response.body
+    assert_match "Nur Lesezugriff auf Wallets", response.body
     assert_match "Mit diesen Daten lassen sich keine Vermögenswerte übertragen.", response.body
     assert_match "Gib niemals eine Seed-Phrase oder einen Private Key ein.", response.body
     assert_match "Bitcoin wird jeweils über eine einzelne Adresse verfolgt.", response.body
@@ -176,7 +176,7 @@ class OnchainWalletItemsLocalizationTest < ActionDispatch::IntegrationTest
   test "representative English output remains unchanged" do
     I18n.with_locale(:en) do
       assert_equal "Add a self-custody wallet", I18n.t("onchain_wallet_items.new_wallet.title", fallback: false)
-      assert_equal "Read-only, no keys required",
+      assert_equal "Read-only wallet access",
                    I18n.t("settings.providers.onchain_wallet_panel.keyless_title", fallback: false)
       assert_equal "Only public chain data is read. Never enter a seed phrase or private key.",
                    I18n.t("onchain_wallet_items.new_wallet.read_only_note", fallback: false)
@@ -194,7 +194,7 @@ class OnchainWalletItemsLocalizationTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_match "Add a self-custody wallet", response.body
-    assert_match "Read-only, no keys required", response.body
+    assert_match "Read-only wallet access", response.body
     assert_match "Never enter a seed phrase or private key.", response.body
   end
 

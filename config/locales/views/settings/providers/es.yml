@@ -199,11 +199,11 @@ es:
         disconnect_all_confirm: Se eliminarán todas las direcciones seguidas y sus cuentas. ¿Continuar?
         etherscan_api_key_label: Clave API de Etherscan (opcional)
         etherscan_api_key_placeholder: Pega una clave API de Etherscan
-        etherscan_hint: Ethereum se lee sin clave. Añadir una clave de Etherscan solo sube el límite de peticiones de Ethereum.
+        etherscan_hint: Con una clave de Etherscan, el historial de transferencias de Ethereum se obtiene de Etherscan. Blockscout proporciona los saldos de las redes EVM.
         keep_etherscan_api_key: Déjalo en blanco para conservar la clave actual
         manage_wallets: Gestionar carteras
-        keyless_body: Sure solo lee datos públicos de la cadena. No intervienen claves, frases semilla ni firmas, y no se puede gastar nada.
-        keyless_title: Solo lectura, sin claves
+        keyless_body: Sure lee direcciones públicas de carteras y no puede gastar fondos. Las redes EVM usan la clave de API de Blockscout del servidor.
+        keyless_title: Acceso de solo lectura a la cartera
         save: Guardar
         sync_start_date_hint: Las transferencias anteriores a esta fecha se ignoran. Déjalo en blanco para importar todo lo que muestre el explorador.
         sync_start_date_label: Ignorar transferencias anteriores a

@@ -52,6 +52,7 @@ VCR.configure do |config|
     false
   end
   config.default_cassette_options = { erb: true }
+  config.filter_sensitive_data("<BLOCKSCOUT_API_KEY>") { ENV["BLOCKSCOUT_API_KEY"].presence }
   config.filter_sensitive_data("<OPENAI_ACCESS_TOKEN>") { ENV["OPENAI_ACCESS_TOKEN"] }
   config.filter_sensitive_data("<OPENAI_ORGANIZATION_ID>") { ENV["OPENAI_ORGANIZATION_ID"] }
   config.filter_sensitive_data("<STRIPE_SECRET_KEY>") { ENV["STRIPE_SECRET_KEY"] }

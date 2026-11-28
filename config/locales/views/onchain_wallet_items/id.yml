@@ -22,6 +22,8 @@ id:
       address_required: Masukkan alamat dompet.
       already_linked: Alamat tersebut sudah dilacak di jaringan ini. Gunakan Tinjau token untuk mengubah aset yang dilacak.
       chain_unreachable: Penjelajah publik untuk jaringan ini tidak dapat dijangkau. Coba lagi sebentar lagi.
+      explorer_key_missing: Minta administrator Sure Anda untuk mengatur BLOCKSCOUT_API_KEY agar dompet EVM dapat disinkronkan.
+      explorer_rejected: Blockscout menolak permintaan untuk membaca dompet. Minta administrator Sure Anda untuk memeriksa kunci API dan hak aksesnya.
       rate_limited: Penjelajah publik sedang membatasi permintaan saat ini. Coba lagi dalam beberapa menit.
       unexpected: Terjadi kesalahan saat membaca dompet ini. Detail telah dicatat untuk bantuan teknis.
       unrecognized_address: Alamat tersebut tidak tampak seperti alamat di jaringan mana pun yang didukung.

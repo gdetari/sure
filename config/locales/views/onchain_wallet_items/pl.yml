@@ -29,6 +29,8 @@ pl:
         tokeny, aby zmienić śledzone aktywa.
       chain_unreachable: Nie udało się połączyć z publicznym eksploratorem tej sieci.
         Spróbuj ponownie za chwilę.
+      explorer_key_missing: Poproś administratora Sure o ustawienie BLOCKSCOUT_API_KEY, aby włączyć synchronizację portfeli EVM.
+      explorer_rejected: Blockscout odrzucił żądanie odczytu portfela. Poproś administratora Sure o sprawdzenie klucza API i jego uprawnień.
       rate_limited: Publiczny eksplorator obecnie ogranicza liczbę żądań. Spróbuj
         ponownie za kilka minut.
       unexpected: Coś poszło nie tak podczas odczytu tego portfela. Szczegóły zostały

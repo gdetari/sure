@@ -307,11 +307,11 @@ uk:
         disconnect_all_confirm: Буде видалено всі відстежувані адреси та їхні рахунки. Продовжити?
         etherscan_api_key_label: Ключ API Etherscan (необов'язково)
         etherscan_api_key_placeholder: Вставте ключ API Etherscan
-        etherscan_hint: Дані Ethereum можна зчитувати без ключа. Ключ Etherscan лише підвищує ліміт запитів для Ethereum.
+        etherscan_hint: За наявності ключа Etherscan історія переказів Ethereum завантажується з Etherscan. Баланси в мережах EVM надає Blockscout.
         keep_etherscan_api_key: Залиште порожнім, щоб зберегти наявний ключ
         manage_wallets: Керувати гаманцями
-        keyless_body: Sure лише зчитує публічні дані блокчейну. Жодні ключі, сид-фрази чи підписи не використовуються, і нічого не може бути витрачено.
-        keyless_title: Лише читання, ключі не потрібні
+        keyless_body: Sure зчитує публічні адреси гаманців і не може витрачати кошти. Для мереж EVM використовується ключ API Blockscout, налаштований на сервері.
+        keyless_title: Доступ до гаманця лише для читання
         save: Зберегти
         sync_start_date_hint: Перекази до цієї дати ігноруються. Залиште порожнім, щоб імпортувати все, що повідомляє оглядач блоків.
         sync_start_date_label: Ігнорувати перекази до

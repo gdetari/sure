@@ -252,12 +252,10 @@ pl:
         disconnect_all_confirm: To usunie wszystkie śledzone adresy i ich konta. Kontynuować?
         etherscan_api_key_label: Klucz API Etherscan (opcjonalnie)
         etherscan_api_key_placeholder: Wklej klucz API Etherscan
-        etherscan_hint: Odczyt danych Ethereum działa bez klucza. Dodanie klucza Etherscan
-          tylko podnosi limit zapytań dla Ethereum.
+        etherscan_hint: Po podaniu klucza Etherscan historia transferów Ethereum jest pobierana z Etherscan. Salda w sieciach EVM pochodzą z Blockscout.
         keep_etherscan_api_key: Zostaw puste, aby zachować obecny klucz
-        keyless_body: Sure wyłącznie odczytuje publiczne dane blockchaina. Nie są
-          potrzebne żadne klucze, frazy seed ani podpisy, i nic nie może zostać wydane.
-        keyless_title: Tylko odczyt, bez wymaganych kluczy
+        keyless_body: Sure odczytuje publiczne adresy portfeli i nie może wydawać środków. Sieci EVM korzystają z klucza API Blockscout skonfigurowanego na serwerze.
+        keyless_title: Dostęp do portfela tylko do odczytu
         manage_wallets: Zarządzaj portfelami
         save: Zapisz
         sync_start_date_hint: Przelewy sprzed tej daty są ignorowane. Zostaw puste,

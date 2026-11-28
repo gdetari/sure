@@ -22,6 +22,8 @@ en:
       address_required: Enter a wallet address.
       already_linked: That address is already being tracked on this network. Use Review tokens to change which assets are tracked.
       chain_unreachable: The public explorer for this network could not be reached. Try again in a moment.
+      explorer_key_missing: Ask your Sure administrator to set BLOCKSCOUT_API_KEY to enable EVM wallet sync.
+      explorer_rejected: Blockscout rejected the wallet request. Ask your Sure administrator to check the API key and its access.
       rate_limited: The public explorer is rate limiting requests right now. Try again in a few minutes.
       unexpected: Something went wrong reading this wallet. The details were recorded for support.
       unrecognized_address: That does not look like an address on any supported network.

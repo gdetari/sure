@@ -198,11 +198,11 @@ en:
         disconnect_all_confirm: This removes every tracked address and its accounts. Continue?
         etherscan_api_key_label: Etherscan API key (optional)
         etherscan_api_key_placeholder: Paste an Etherscan API key
-        etherscan_hint: Ethereum reads work without a key. Adding an Etherscan key only raises the rate limit for Ethereum.
+        etherscan_hint: An Etherscan key selects Etherscan for Ethereum transfer history. Blockscout supplies EVM balances.
         keep_etherscan_api_key: Leave blank to keep the existing key
         manage_wallets: Manage wallets
-        keyless_body: Sure only ever reads public chain data. No keys, seed phrases or signatures are involved, and nothing can be spent.
-        keyless_title: Read-only, no keys required
+        keyless_body: Sure reads public wallet addresses and cannot spend funds. EVM networks use the server’s Blockscout API key.
+        keyless_title: Read-only wallet access
         save: Save
         sync_start_date_hint: Transfers before this date are ignored. Leave blank to import everything the explorer reports.
         sync_start_date_label: Ignore transfers before

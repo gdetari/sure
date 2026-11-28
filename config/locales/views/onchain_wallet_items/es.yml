@@ -22,6 +22,8 @@ es:
       address_required: Introduce una dirección de cartera.
       already_linked: Esa dirección ya se sigue en esta red. Usa Revisar tokens para cambiar qué activos se siguen.
       chain_unreachable: No se ha podido acceder al explorador público de esta red. Inténtalo de nuevo en un momento.
+      explorer_key_missing: Pide al administrador de Sure que configure BLOCKSCOUT_API_KEY para sincronizar carteras EVM.
+      explorer_rejected: Blockscout ha rechazado la consulta de la cartera. Pide al administrador de Sure que compruebe la clave de API y sus permisos.
       rate_limited: El explorador público está limitando las solicitudes. Inténtalo de nuevo en unos minutos.
       unexpected: Algo ha fallado al leer esta cartera. Se han guardado los detalles para soporte.
       unrecognized_address: No parece una dirección de ninguna red compatible.

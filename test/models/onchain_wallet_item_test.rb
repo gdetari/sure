@@ -15,7 +15,7 @@ class OnchainWalletItemTest < ActiveSupport::TestCase
     unregister_fake_chain!
   end
 
-  test "is syncable without credentials because chains are readable keyless" do
+  test "is syncable without per-family credentials" do
     assert @item.credentials_configured?
   end
 

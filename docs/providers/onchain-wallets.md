@@ -1,8 +1,8 @@
 # On-chain (self-custody) wallets
 
 Sure can track wallets you hold the keys to — Bitcoin, six EVM networks,
-Solana, Polkadot and the Cosmos Hub — from their **public addresses only**. Nothing is signed, no key or seed
-phrase is ever entered, and no API key is required for any chain.
+Solana, Polkadot and the Cosmos Hub — from their **public addresses only**.
+Sure never needs a wallet private key or seed phrase.
 
 This document covers where the data comes from, what needs configuring, the
 limits you will hit, and how to diagnose a wallet that looks wrong.
@@ -70,12 +70,7 @@ listed, so the cause is visible without having to reproduce it.
 | Network | Source | Key required | Override |
 |---|---|---|---|
 | Bitcoin | [mempool.space](https://mempool.space) REST API | No | `MEMPOOL_SPACE_URL` |
-| Ethereum | Blockscout (`eth.blockscout.com`) | No | `BLOCKSCOUT_ETHEREUM_URL` |
-| Base | Blockscout (`base.blockscout.com`) | No | `BLOCKSCOUT_BASE_URL` |
-| Arbitrum | Blockscout (`arbitrum.blockscout.com`) | No | `BLOCKSCOUT_ARBITRUM_URL` |
-| Optimism | Blockscout (`optimism.blockscout.com`) | No | `BLOCKSCOUT_OPTIMISM_URL` |
-| Polygon | Blockscout (`polygon.blockscout.com`) | No | `BLOCKSCOUT_POLYGON_URL` |
-| Gnosis | Blockscout (`gnosis.blockscout.com`) | No | `BLOCKSCOUT_GNOSIS_URL` |
+| Ethereum, Base, Arbitrum, Optimism, Polygon, Gnosis | Blockscout multichain REST API | `BLOCKSCOUT_API_KEY` | — |
 | Solana | Public JSON-RPC (`api.mainnet-beta.solana.com`) | No | `SOLANA_RPC_URL` |
 | Solana token names | Jupiter token search (`lite-api.jup.ag`) | No | `SOLANA_TOKEN_LIST_URL` |
 | Cosmos Hub | Public REST node (`cosmos-rest.publicnode.com`) | No | `COSMOS_REST_URL` |
@@ -85,31 +80,45 @@ Every override expects the base URL of a compatible instance, without a trailing
 slash — useful if you run your own indexer or node, or if a public endpoint rate
 limits you.
 
-### Optional Etherscan key
+### Configure Blockscout for EVM wallet sync
 
-Ethereum, and only Ethereum, can be read through Etherscan instead of
-Blockscout. A key buys nothing except a higher rate limit. Add it under
-**Settings → Providers → On-chain wallets → Advanced**; it is stored encrypted,
-per family.
+Generate a multichain API key and set `BLOCKSCOUT_API_KEY` for both the Sure
+web process and its background worker. The same key authenticates all six EVM
+networks. Check that your Blockscout plan includes the networks you want to
+sync, particularly Base and Polygon.
+[Get a Blockscout API key](https://dev.blockscout.com/)
 
-A key only moves **transfer history** onto Etherscan. Balances and network
-detection always come from the keyless indexer, because Etherscan has no free
-endpoint that lists an address's tokens and summing transfer history would be
-wrong for a rebasing token — and wrong outright for anything older than the
-history cap. History is the paginated, rate-limited half of the work, so that is
-where a key actually helps. Leave the field empty unless you are being rate
-limited.
+The example Docker Compose file forwards
+the variable from your `.env` file to both services. For an existing Compose
+file, add `BLOCKSCOUT_API_KEY: ${BLOCKSCOUT_API_KEY:-}` to the shared
+`x-rails-env` block, then recreate `web` and `worker`.
+
+The linking form identifies Blockscout as the server's EVM data source.
+[View the Blockscout wallet form](onchain-blockscout-wallet.png).
+
+Sure sends wallet reads to `https://api.blockscout.com/{chain_id}/api/v2/`.
+This replaces the per-network `BLOCKSCOUT_<CHAIN>_URL` settings. Existing wallet
+links and imported transfers keep their identifiers, so you can sync existing
+wallets as soon as the key has access to their networks.
+[Blockscout authentication and routes](https://docs.blockscout.com/devs/blockscout-api-responses-and-routes)
+
+### Optional Ethereum history source
+
+Blockscout supplies detection, balances and transfer history with that single
+key. Families that select Etherscan under **Settings → Providers → On-chain
+wallets → Advanced** use Etherscan for Ethereum transfer history. Blockscout
+still supplies their balances, including tokens held without recent transfers.
 
 ## Rate limits and request cost
 
-All the default endpoints are free and shared, so they throttle. Each client
-paces its own requests and retries a 429 with exponential backoff. Per sync, per
-address, the cost is roughly:
+Each Sure process paces Blockscout requests across all EVM networks because
+they share the key’s rate limit. Sync retries HTTP 429 with exponential backoff.
+Network detection makes one attempt per chain within its shared deadline.
 
 | Network | Requests per sync |
 |---|---|
 | Bitcoin | 1 + up to 10 history pages |
-| EVM | 1 summary + up to 10 pages of transfers + up to 10 pages of token transfers |
+| EVM (Blockscout) | 1 address summary + up to 10 pages each of token balances, transactions and token transfers |
 | Solana | ~2 + up to 25 transaction reads |
 | Cosmos Hub | 4, plus a page per extra 200 validators staked with |
 | Polkadot | 1 |
@@ -152,10 +161,14 @@ arbitrary, but identical between syncs, which is what stops the cap from
 reshuffling a wallet every night. The cap is stated in the review screen and in
 Manage wallets whenever it applies.
 
-Detecting which network an address belongs to costs **exactly one request per
-candidate network**, and never reads history. If an explorer is down during
-detection, that network simply reports "nothing found" instead of failing the
-whole flow; you can still pick it by hand.
+Blockscout usually returns token balances in one response. If it splits the
+balances across pages and Sure reaches the page limit, tracked tokens missing
+from those pages keep their last known quantities.
+
+EVM network detection checks one address summary per candidate chain. If a
+chain times out, you can still select a network yourself. If every candidate
+requires a missing or rejected credential, the linking screen shows the
+configuration error.
 
 ## Linking a wallet
 
@@ -284,9 +297,15 @@ zero. See "Limitations" — there is no setting that changes this.
 **A Bitcoin balance is much lower than my wallet app shows.** You are tracking one
 address of an HD wallet. See "Limitations".
 
+**The explorer rejected the wallet request.** Check the Blockscout key and API
+access in the Developer Portal. Both `web` and `worker` need the same active
+`BLOCKSCOUT_API_KEY`. If Blockscout returns HTTP 402 and lists the plans required
+for a chain, the current plan does not cover that network. The same key can
+still sync wallets on networks included in the plan.
+
 **Sync says the explorer could not be reached.** The public endpoint is down,
-throttling you, or too slow to answer. Retry later, or point the relevant
-`*_URL` override at your own instance. This is the message for any transport
+throttling you, or too slow to answer. Retry later. For non-EVM networks,
+you can also use an override listed in the data sources table. This is the message for any transport
 failure — a refused connection, a timeout, a TLS error — as opposed to the
 generic "something went wrong", which means a bug worth reporting.
 

@@ -203,6 +203,46 @@ class OnchainWalletItemsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match "blockscout down", response.body
   end
 
+  test "a Base explorer 403 explains the rejection and leaves the wallet unlinked" do
+    address = "0x" + "1" * 40
+    with_env_overrides(BLOCKSCOUT_API_KEY: "test-key") do
+      rejected = stub_request(:get, "https://api.blockscout.com/8453/api/v2/addresses/#{address}").with(headers: { "Authorization" => "Bearer test-key" }).to_return(
+        status: 403, headers: { "Content-Type" => "text/html" }, body: "<title>Just a moment...</title>"
+      )
+
+      assert_no_difference "OnchainWalletItem.count" do
+        post preview_wallet_onchain_wallet_items_url, params: { chain: "base", address: address }
+      end
+
+      assert_response :unprocessable_entity
+      assert_match I18n.t!("onchain_wallet_items.errors.explorer_rejected"), response.body
+      assert_requested rejected, times: 1
+    end
+  end
+
+  test "a missing Blockscout key explains how to enable EVM wallet reads before contacting the API" do
+    with_env_overrides(BLOCKSCOUT_API_KEY: " ") do
+      [ nil, "base" ].each do |chain|
+        post preview_wallet_onchain_wallet_items_url, params: { chain: chain, address: "0x" + "1" * 40 }
+
+        assert_response :unprocessable_entity
+        assert_match I18n.t!("onchain_wallet_items.errors.explorer_key_missing"), response.body
+      end
+      assert_not_requested :get, %r{\Ahttps://api\.blockscout\.com/}
+    end
+  end
+
+  test "automatic detection reports a key denied on every EVM network" do
+    with_env_overrides(BLOCKSCOUT_API_KEY: "denied-test-key") do
+      denied = stub_request(:get, %r{\Ahttps://api\.blockscout\.com/\d+/api/v2/addresses/}).to_return(status: 402)
+      post preview_wallet_onchain_wallet_items_url, params: { address: "0x" + "1" * 40 }
+
+      assert_response :unprocessable_entity
+      assert_match I18n.t!("onchain_wallet_items.errors.explorer_rejected"), response.body
+      assert_requested denied, times: 6
+    end
+  end
+
   test "a data source that times out reads as unreachable, not as our own failure" do
     OnchainTestHelper::FakeAdapter.error = Provider::MempoolSpace::ApiError.new("MempoolSpace is unavailable (Net::ReadTimeout)")
     OnchainTestHelper::FakeAdapter.provider_error_classes = [ Provider::MempoolSpace::RateLimitError, Provider::MempoolSpace::Error ]

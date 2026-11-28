@@ -22,6 +22,8 @@ de:
       address_required: Gib eine Wallet-Adresse ein.
       already_linked: Diese Adresse wird in diesem Netzwerk bereits verfolgt. Welche Vermögenswerte verfolgt werden, kannst du in der Wallet-Verwaltung ändern.
       chain_unreachable: Der öffentliche Explorer für dieses Netzwerk ist nicht erreichbar. Versuch es gleich noch einmal.
+      explorer_key_missing: Bitte deinen Sure-Administrator, BLOCKSCOUT_API_KEY für die Synchronisierung von EVM-Wallets zu setzen.
+      explorer_rejected: Blockscout hat die Wallet-Abfrage abgelehnt. Bitte deinen Sure-Administrator, den API-Schlüssel und seine Berechtigungen zu prüfen.
       rate_limited: Der öffentliche Explorer begrenzt derzeit die Anzahl der Anfragen. Versuch es in ein paar Minuten erneut.
       unexpected: Beim Lesen dieser Wallet ist etwas schiefgelaufen. Die Details wurden für den Support erfasst.
       unrecognized_address: Diese Adresse scheint zu keinem unterstützten Netzwerk zu gehören.
