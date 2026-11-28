@@ -36,7 +36,7 @@
                   min: 0,
                   step: "any",
                   disabled: @entry.linked? %>
-          <% elsif trade.non_cash_reward.nil? %>
+          <% elsif @entry.non_cash_value.nil? %>
             <div class="flex items-center gap-2">
               <%= f.select :nature,
                             [[t(".buy"), "outflow"], [t(".sell"), "inflow"]],

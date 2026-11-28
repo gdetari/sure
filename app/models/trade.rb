@@ -13,13 +13,6 @@ class Trade < ApplicationRecord
   # Use the same activity labels as Transaction
   ACTIVITY_LABELS = Transaction::ACTIVITY_LABELS.dup.freeze
 
-  REWARD_PROVIDERS = { "kraken" => KrakenAccount::LedgerProcessor }.freeze
-  NonCashReward = Data.define(:quantity, :unit_price) do
-    def value
-      unit_price * quantity if unit_price
-    end
-  end
-
   # The labels that mean the asset went somewhere else you own rather than
   # being bought or sold.
   #
@@ -112,14 +105,8 @@ class Trade < ApplicationRecord
   end
 
   def non_cash_reward
-    return unless qty&.positive? && entry&.amount&.zero?
-
-    source = entry.source
-    status = REWARD_PROVIDERS[source]&.reward_price_status(extra[source] || {})
-    return unless status
-
-    unit_price = price_money if status == :historical && price&.positive?
-    NonCashReward.new(qty, unit_price)
+    estimate = entry&.non_cash_value
+    estimate if estimate&.kind == :reward
   end
 
   # A sale that can name the lot it sold from.

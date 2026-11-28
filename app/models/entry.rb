@@ -557,6 +557,10 @@ class Entry < ApplicationRecord
     Balance::TrendCalculator.new(self, entries, balances).trend
   end
 
+  def non_cash_value
+    NonCashValue.for(self)
+  end
+
   def linked?
     external_id.present?
   end

@@ -444,17 +444,22 @@ class OnchainWalletAccount::ProcessorTest < ActiveSupport::TestCase
     assert_equal "Trade", onchain_entry("good").entryable_type
   end
 
-  test "the repair pass survives a malformed stored amount too" do
+  test "the repair pass skips malformed stored movements and still prices valid transfers" do
     date = 3.days.ago.to_date
-    store_movements(fake_movement(external_id: "tx1", amount: "1", timestamp: date))
-    OnchainWalletAccount::Processor.new(@onchain_account).process
-    entry = onchain_entry("tx1")
-    entry.entryable.update!(extra: { "onchain_wallet" => { "amount" => "not-a-number", "date" => date.to_s } })
+    movements = %w[bad_amount bad_payload good].map do |id|
+      fake_movement(external_id: id, amount: "1", timestamp: date)
+    end
+    store_movements(*movements)
+    processor = OnchainWalletAccount::Processor.new(@onchain_account)
+    processor.process
+    onchain_entry("bad_amount").transaction.update!(extra: { "onchain_wallet" => { "amount" => "not-a-number" } })
+    onchain_entry("bad_payload").transaction.update!(extra: { "onchain_wallet" => "unknown" })
     price_asset_at(date, 50)
 
-    assert_nothing_raised do
-      assert_equal 0, OnchainWalletAccount::Processor.new(@onchain_account).repair_display_only_movements
-    end
+    assert_equal 1, processor.repair_display_only_movements
+    assert_nil onchain_entry("bad_amount").non_cash_value
+    assert_nil onchain_entry("bad_payload").non_cash_value
+    assert_equal Money.new(50, "USD"), onchain_entry("good").non_cash_value.value
   end
 
   test "revalue brings an idle wallet up to the latest price and asks for an account sync" do

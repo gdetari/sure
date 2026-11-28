@@ -1,4 +1,11 @@
 module EntriesHelper
+  def format_non_cash_value(value)
+    return t("entries.non_cash_value.unavailable") unless value
+    return format_money(value) unless value.for_display.zero?
+
+    t("entries.non_cash_value.less_than", amount: format_money(Money.new(value.currency.step, value.currency)))
+  end
+
   SplitGroup = Data.define(:parent, :children)
 
   def group_split_entries(entries, split_parents)

@@ -13,6 +13,23 @@ class OnchainWalletAccount::Processor
 
   attr_reader :onchain_wallet_account
 
+  def self.non_cash_value(record)
+    case record
+    when Trade
+      return unless record.investment_activity_label == TRANSFER_LABEL
+
+      Entry::NonCashValue.build(:transfer, record.qty, unit_price: record.price_money)
+    when Transaction
+      Entry::NonCashValue.build(:transfer, stored_amount(record))
+    end
+  end
+
+  # Unpriced transfers keep their signed quantity in the original wallet payload.
+  def self.stored_amount(transaction)
+    movement = transaction.extra[SOURCE] if transaction.extra.is_a?(Hash)
+    movement["amount"] if movement.is_a?(Hash)
+  end
+
   def initialize(onchain_wallet_account)
     @onchain_wallet_account = onchain_wallet_account
   end
@@ -240,7 +257,7 @@ class OnchainWalletAccount::Processor
         next if date.nil?
 
         amount = parse_amount(movement["amount"])
-        next if amount.nil? || amount.zero?
+        next unless amount
 
         price = exact_price_on(security, date)
 
@@ -398,9 +415,8 @@ class OnchainWalletAccount::Processor
     end
 
     def upgrade_to_trade(entry, security)
-      movement = entry.entryable.extra.to_h[SOURCE].to_h
-      amount = parse_amount(movement["amount"])
-      return false if amount.nil? || amount.zero?
+      amount = parse_amount(self.class.stored_amount(entry.transaction))
+      return false unless amount
 
       price = exact_price_on(security, entry.date)
       return false if price.nil?
@@ -446,17 +462,9 @@ class OnchainWalletAccount::Processor
       convert(price.price.to_d, from: price.currency, date: date)
     end
 
-    # Stored payloads are written by this code, but a row that survived an older
-    # format should cost one movement rather than the whole asset's processing.
-    #
-    # NaN and the infinities have to be rejected explicitly: BigDecimal parses all
-    # three, and neither is zero, so they would sail through into a trade and only
-    # blow up on rounding.
     def parse_amount(value)
-      amount = BigDecimal(value.to_s)
-      amount.finite? ? amount : nil
-    rescue ArgumentError, TypeError
-      nil
+      amount = BigDecimal(value.to_s, exception: false)
+      amount if amount&.finite? && amount.nonzero?
     end
 
     def parse_date(value)

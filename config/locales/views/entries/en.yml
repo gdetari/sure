@@ -1,6 +1,18 @@
 ---
 en:
   entries:
+    non_cash_details:
+      quantity_received: Quantity received
+      quantity_sent: Quantity sent
+      price_at_receipt: Unit price at receipt
+      price_at_transfer: Unit price at transfer
+      cash_movement: Cash movement
+    non_cash_value:
+      reward: Estimated value received (non-cash)
+      short_reward: Non-cash estimate
+      transfer: Value at transfer
+      less_than: "< %{amount}"
+      unavailable: Unavailable
     create:
       success: Entry created
     destroy:

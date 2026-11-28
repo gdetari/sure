@@ -77,8 +77,8 @@
           <% end %>
         <% end %>
 
-        <% if (reward = trade.non_cash_reward) %>
-          <p class="text-right"><%= render "trades/reward_value", value: reward.value, compact: true %></p>
+        <% if (estimate = entry.non_cash_value) %>
+          <p class="text-right"><%= render "entries/non_cash_value", estimate: estimate, compact: true %></p>
         <% else %>
           <%= tag.p format_money(-entry.amount_money), class: ["privacy-sensitive", "text-success": entry.amount.negative?] %>
         <% end %>

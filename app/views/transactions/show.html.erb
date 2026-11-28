@@ -79,7 +79,9 @@
                 label: t(".date_label"),
                 disabled: @entry.linked? || split_locked || edit_locked,
                 "data-auto-submit-form-target": "auto" %>
-          <% unless @entry.transaction.transfer? %>
+          <% if (estimate = @entry.non_cash_value) %>
+            <dl class="space-y-3"><%= render "entries/non_cash_details", entry: @entry, estimate: estimate %></dl>
+          <% elsif !@entry.transaction.transfer? %>
             <div class="flex items-center gap-2">
               <%= f.select :nature,
                     [[t("shared.transaction_tabs.expense"), "outflow"], [t("shared.transaction_tabs.income"), "inflow"]],
